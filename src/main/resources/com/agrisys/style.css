@@ -1,0 +1,80 @@
+/* 
+ * Agrisys Global Stylesheet 
+ * Following the principle of "Separation of Concerns" (Pressman), 
+ * all visual styling is decoupled from FXML structure.
+ */
+
+.root {
+    /* Design Tokens / Variables */
+    -agri-primary: #1a5276;       /* Deep Tech Blue */
+    -agri-secondary: #f0f4f8;     /* Light Slate Blue/Grey */
+    -agri-accent: #3498db;        /* Modern Azure Blue */
+    -agri-text-dark: #2c3e50;     /* Navy Charcoal */
+    -agri-text-light: #ffffff;
+    -agri-border-color: #d1dce5;
+    
+    -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* TabPane Customization */
+.tab-pane {
+    -fx-tab-min-height: 40px; /* Increased size for modern feel */
+    -fx-tab-max-height: 40px;
+}
+
+.tab-pane .tab-header-area {
+    -fx-padding: 0 0 0 0;
+    -fx-background-color: -agri-secondary;
+}
+
+.tab-pane .tab-header-background {
+    -fx-background-color: transparent;
+    -fx-border-color: -agri-border-color;
+    -fx-border-width: 0 0 1 0; /* Bottom border only */
+}
+
+.tab-pane .tab {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-padding: 0 30 0 30; /* Ample horizontal padding */
+    -fx-cursor: hand;
+    -fx-transition: 0.3s;
+    -fx-focus-color: transparent;
+        -fx-faint-focus-color: transparent;
+}
+
+.tab-pane .tab:hover {
+    -fx-background-color: #e2e8f0;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: -agri-primary;
+    /* Create a bottom indicator bar */
+    -fx-border-color: -agri-accent;
+    -fx-border-width: 0 0 4 0;
+}
+
+.tab-pane .tab .tab-label {
+    -fx-text-fill: -agri-text-dark;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px; /* Slightly larger text */
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: -agri-text-light;
+}
+
+/* View Container Styling */
+.view-container {
+    -fx-padding: 30px;
+    -fx-background-color: white;
+}
+
+/* Header Text */
+.header-label {
+    -fx-text-fill: -agri-primary;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}

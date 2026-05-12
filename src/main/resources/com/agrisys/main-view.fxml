@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox prefHeight="768.0" prefWidth="1024.0" stylesheets="@style.css"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.agrisys.controller.MainController">
+   <children>
+      <TabPane fx:id="mainTabPane" side="TOP" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+        <tabs>
+          <Tab text="Home">
+            <content>
+                <fx:include source="dashboard-view.fxml" />
+            </content>
+          </Tab>
+          <Tab text="Grise">
+            <content>
+                <fx:include source="pigs-view.fxml" />
+            </content>
+          </Tab>
+          <Tab text="Bokse">
+            <content>
+                <fx:include source="location-view.fxml" />
+            </content>
+          </Tab>
+        </tabs>
+      </TabPane>
+   </children>
+</VBox>
