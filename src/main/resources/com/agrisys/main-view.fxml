@@ -11,7 +11,7 @@
         <tabs>
           <Tab text="Home">
             <content>
-                <fx:include source="dashboard-view.fxml" />
+                <fx:include source="home-view.fxml" />
             </content>
           </Tab>
           <Tab text="Grise">
