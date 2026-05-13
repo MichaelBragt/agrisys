@@ -3,7 +3,7 @@
     <option name="ALTERNATIVE_JRE_PATH" value="openjdk-24" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="MAIN_CLASS_NAME" value="com.agrisys.Launcher" />
-    <module name="Agrisys.main" />
+    <module name="agrisys" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
