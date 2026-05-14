@@ -12,11 +12,11 @@ import java.util.Optional;
  */
 public class PigDAO {
     
-    public Optional<PigRecord> findById(int id) throws SQLException {
-        String sql = "SELECT PigID, BirthDate, Status FROM Pig WHERE PigID = ?";
+    public Optional<PigRecord> findByAnimalNumber(String animalNumber) throws SQLException {
+        String sql = "SELECT animal_number, birth_date, status FROM Pig WHERE animal_number = ?";
         try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
+            pstmt.setString(1, animalNumber);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return Optional.of(map(rs));
@@ -28,7 +28,7 @@ public class PigDAO {
 
     public List<PigRecord> findAllActive() throws SQLException {
         List<PigRecord> pigs = new ArrayList<>();
-        String sql = "SELECT * FROM Pig WHERE Status = 'Aktiv'";
+        String sql = "SELECT animal_number, birth_date, status FROM Pig WHERE status = 'Aktiv'";
         try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -40,11 +40,11 @@ public class PigDAO {
     }
 
     private PigRecord map(ResultSet rs) throws SQLException {
-        Date birth = rs.getDate("BirthDate");
+        Date birth = rs.getDate("birth_date");
         return new PigRecord(
-            rs.getInt("PigID"),
+            rs.getString("animal_number"),
             birth != null ? birth.toLocalDate() : null,
-            rs.getString("Status")
+            rs.getString("status")
         );
     }
 }
