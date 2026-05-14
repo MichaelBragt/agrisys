@@ -16,6 +16,8 @@ public class MainController {
     public void initialize() {
         // Initialization logic for the TabPane shell
 
+        // Just a line used for testing db connection
+        // is to be removed
         DbConnect connection = DbConnect.UNIQUE_CONNECT;
 
     }
