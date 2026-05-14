@@ -40,6 +40,11 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
     implementation("com.microsoft.sqlserver:mssql-jdbc:12.2.0.jre11") // Or the latest version compatible with your Java version
+    // Apache POI for Excel file parsing
+    implementation("org.apache.poi:poi:5.2.5") // Core POI components
+    implementation("org.apache.poi:poi-ooxml:5.2.5") // For .xlsx files (Excel 2007+)
+    implementation("org.apache.logging.log4j:log4j-core:2.20.0")
+    implementation("org.apache.logging.log4j:log4j-api:2.20.0")
 }
 
 tasks.withType<Test> {

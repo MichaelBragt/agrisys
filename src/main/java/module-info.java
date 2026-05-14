@@ -3,6 +3,8 @@ module com.agrisys {
     requires javafx.fxml;
     requires java.sql;
     requires io.github.cdimascio.dotenv.java;
+    requires org.apache.poi.poi;
+    requires org.apache.poi.ooxml;
 
     opens com.agrisys to javafx.fxml, javafx.graphics;
     opens com.agrisys.controller to javafx.fxml;
