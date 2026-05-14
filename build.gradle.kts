@@ -39,6 +39,7 @@ dependencies {
     implementation("io.github.cdimascio:dotenv-java:3.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+    implementation("com.microsoft.sqlserver:mssql-jdbc:12.2.0.jre11") // Or the latest version compatible with your Java version
 }
 
 tasks.withType<Test> {

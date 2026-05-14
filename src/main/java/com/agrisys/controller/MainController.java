@@ -1,5 +1,6 @@
 package com.agrisys.controller;
 
+import com.agrisys.DbConnect;
 import javafx.fxml.FXML;
 import javafx.scene.control.TabPane;
 
@@ -14,5 +15,8 @@ public class MainController {
 
     public void initialize() {
         // Initialization logic for the TabPane shell
+
+        DbConnect connection = DbConnect.UNIQUE_CONNECT;
+
     }
 }
