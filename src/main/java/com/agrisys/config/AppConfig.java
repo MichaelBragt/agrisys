@@ -19,7 +19,7 @@ public final class AppConfig {
 
     // FXML Paths
     public static final String MAIN_VIEW = "main-view.fxml";
-    public static final String DASHBOARD_VIEW = "dashboard-view.fxml";
+    public static final String DASHBOARD_VIEW = "home-view.fxml";
     public static final String PIGS_VIEW = "pigs-view.fxml";
     public static final String LOCATION_VIEW = "location-view.fxml";
 }
