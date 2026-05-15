@@ -10,6 +10,25 @@ import java.util.Optional;
  */
 public class RespondersDAO {
     
+    /**
+     * Ensures a responder exists.
+     */
+    public void ensureExists(Connection conn, String responderId) throws SQLException {
+        String checkSql = "SELECT 1 FROM Responders WHERE responder_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(checkSql)) {
+            pstmt.setString(1, responderId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (!rs.next()) {
+                    String insertSql = "INSERT INTO Responders (responder_id, status) VALUES (?, 'I brug')";
+                    try (PreparedStatement insertPstmt = conn.prepareStatement(insertSql)) {
+                        insertPstmt.setString(1, responderId);
+                        insertPstmt.executeUpdate();
+                    }
+                }
+            }
+        }
+    }
+
     public Optional<RespondersRecord> findById(String responderId) throws SQLException {
         String sql = "SELECT responder_id, status FROM Responders WHERE responder_id = ?";
         try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();

@@ -41,10 +41,9 @@ public class LocationDAO {
      * @return An Optional containing the LocationRecord if found.
      * @throws SQLException if a database error occurs.
      */
-    public Optional<LocationRecord> findByName(String name) throws SQLException {
+    public Optional<LocationRecord> findByName(Connection conn, String name) throws SQLException {
         String sql = "SELECT location_id, location_name FROM Location WHERE location_name = ?";
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, name);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -62,10 +61,9 @@ public class LocationDAO {
      * @return The generated location_id for the new location.
      * @throws SQLException if a database error occurs.
      */
-    public int create(LocationRecord location) throws SQLException {
+    public int create(Connection conn, LocationRecord location) throws SQLException {
         String sql = "INSERT INTO Location (location_name) VALUES (?)";
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, location.locationName());
             pstmt.executeUpdate();
             try (ResultSet rs = pstmt.getGeneratedKeys()) {

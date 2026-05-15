@@ -12,6 +12,25 @@ import java.util.Optional;
  */
 public class PigDAO {
     
+    /**
+     * Ensures a pig exists in the database. If it doesn't, it creates it.
+     */
+    public void ensureExists(Connection conn, String animalNumber) throws SQLException {
+        String checkSql = "SELECT 1 FROM Pig WHERE animal_number = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(checkSql)) {
+            pstmt.setString(1, animalNumber);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (!rs.next()) {
+                    String insertSql = "INSERT INTO Pig (animal_number, status) VALUES (?, 'Aktiv')";
+                    try (PreparedStatement insertPstmt = conn.prepareStatement(insertSql)) {
+                        insertPstmt.setString(1, animalNumber);
+                        insertPstmt.executeUpdate();
+                    }
+                }
+            }
+        }
+    }
+
     public Optional<PigRecord> findByAnimalNumber(String animalNumber) throws SQLException {
         String sql = "SELECT animal_number, birth_date, status FROM Pig WHERE animal_number = ?";
         try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();

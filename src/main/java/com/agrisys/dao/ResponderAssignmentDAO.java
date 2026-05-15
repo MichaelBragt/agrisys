@@ -20,11 +20,10 @@ public class ResponderAssignmentDAO {
      * @return An Optional containing the ResponderAssignmentRecord if an active assignment is found.
      * @throws SQLException if a database error occurs.
      */
-    public Optional<ResponderAssignmentRecord> findActiveAssignmentByResponderId(String responderId) throws SQLException {
+    public Optional<ResponderAssignmentRecord> findActiveAssignmentByResponderId(Connection conn, String responderId) throws SQLException {
         String sql = "SELECT assignment_id, animal_number, responder_id, date_assigned, date_removed " +
                      "FROM Responder_Assignment WHERE responder_id = ? AND date_removed IS NULL";
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, responderId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -43,10 +42,9 @@ public class ResponderAssignmentDAO {
      * @return The generated assignment_id for the new assignment.
      * @throws SQLException if a database error occurs.
      */
-    public int create(ResponderAssignmentRecord assignment) throws SQLException {
+    public int create(Connection conn, ResponderAssignmentRecord assignment) throws SQLException {
         String sql = "INSERT INTO Responder_Assignment (animal_number, responder_id, date_assigned) VALUES (?, ?, ?)";
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, assignment.animalNumber());
             pstmt.setString(2, assignment.responderId());
             pstmt.setTimestamp(3, Timestamp.valueOf(assignment.dateAssigned()));

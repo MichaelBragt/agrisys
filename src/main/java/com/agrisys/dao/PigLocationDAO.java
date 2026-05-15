@@ -20,11 +20,10 @@ public class PigLocationDAO {
      * @return An Optional containing the PigLocationRecord if an active placement is found.
      * @throws SQLException if a database error occurs.
      */
-    public Optional<PigLocationRecord> findCurrentLocationByAnimalNumber(String animalNumber) throws SQLException {
+    public Optional<PigLocationRecord> findCurrentLocationByAnimalNumber(Connection conn, String animalNumber) throws SQLException {
         String sql = "SELECT pig_location_id, animal_number, location_id, arrived_at, departed_at " +
                      "FROM Pig_Location WHERE animal_number = ? AND departed_at IS NULL";
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, animalNumber);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -43,10 +42,9 @@ public class PigLocationDAO {
      * @return The generated pig_location_id for the new placement.
      * @throws SQLException if a database error occurs.
      */
-    public int create(PigLocationRecord placement) throws SQLException {
+    public int create(Connection conn, PigLocationRecord placement) throws SQLException {
         String sql = "INSERT INTO Pig_Location (animal_number, location_id, arrived_at) VALUES (?, ?, ?)";
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, placement.animalNumber());
             pstmt.setInt(2, placement.locationId());
             pstmt.setTimestamp(3, Timestamp.valueOf(placement.arrivedAt()));
