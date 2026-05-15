@@ -46,6 +46,28 @@ public class PptDataDAO {
         }
     }
 
+    /**
+     * Saves a single measurement using an existing transactional connection.
+     *
+     * @param conn The active database connection.
+     * @param m    The PptDataRecord to persist.
+     * @throws SQLException if a database error occurs.
+     */
+    public void saveSingle(Connection conn, PptDataRecord m) throws SQLException {
+        String sql = """
+            INSERT INTO PPT_Data (assignment_id, visit_time, pig_weight, feed_intake, visit_duration)
+            VALUES (?, ?, ?, ?, ?)
+        """;
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, m.assignmentId());
+            pstmt.setTimestamp(2, Timestamp.valueOf(m.visitTime()));
+            pstmt.setDouble(3, m.pigWeight());
+            pstmt.setDouble(4, m.feedIntake());
+            pstmt.setInt(5, m.visitDuration());
+            pstmt.executeUpdate();
+        }
+    }
+
     public List<PptDataRecord> findByAssignmentId(int assignmentId) throws SQLException {
         return List.of(); 
     }

@@ -2,6 +2,7 @@ package com.agrisys.controller;
 
 import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.dto.ExcelImportDTO;
+import com.agrisys.service.DataIngestionService;
 import com.agrisys.service.ExcelParserService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -15,6 +16,7 @@ public class HomeController {
     private Button importButton;
 
     private final ExcelParserService parserService = new ExcelParserService();
+    private final DataIngestionService dataIngestionService = new DataIngestionService();
 
     /**
      * Handles the button click to upload and parse an Excel file.
@@ -34,7 +36,9 @@ public class HomeController {
                 // Step 1: Parse to DTOs
                 List<ExcelImportDTO> rawData = parserService.parseExcel(selectedFile);
                 
-                // Step 2: (To be implemented) Pass rawData to a Business Logic Service 
+                // Step 2: (To be implemented) Pass rawData to a Business Logic Service
+
+                dataIngestionService.processImport(rawData);
                 // that handles the DAOs and database distribution.
                 System.out.println("Successfully parsed " + rawData.size() + " rows.");
                 
