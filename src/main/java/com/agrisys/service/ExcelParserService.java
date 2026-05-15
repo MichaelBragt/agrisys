@@ -21,14 +21,14 @@ public class ExcelParserService {
 
     private static final Logger LOGGER = Logger.getLogger(ExcelParserService.class.getName());
     
-    // Mapping updated to 7-column layout (A=0 through G=6)
-    private static final int COL_ANIMAL_NR = 0;  // Column A (Internal ID)
-    private static final int COL_RFID = 1;       // Column B (Responder/Tag ID)
+    // Strict Column Mapping (A=0 through G=6)
+    private static final int COL_ANIMAL_NUMBER = 0; // Column A
+    private static final int COL_RESPONDER = 1;     // Column B
     private static final int COL_LOCATION = 2;   // Column C (Pen/Station)
-    private static final int COL_TIMESTAMP = 3;  // Column D (visit_time String)
-    private static final int COL_DURATION = 4;   // Column E (Seconds)
-    private static final int COL_WEIGHT = 5;     // Column F (Weight)
-    private static final int COL_FEED = 6;       // Column G (Feed Intake)
+    private static final int COL_VISIT_TIME = 3;    // Column D (visit_time String)
+    private static final int COL_DURATION = 4;      // Column E (Seconds)
+    private static final int COL_WEIGHT = 5;        // Column F (Weight)
+    private static final int COL_FEED_INTAKE = 6;   // Column G (Feed Intake)
 
     /**
      * List of formatters to try for string-based dates.
@@ -72,30 +72,27 @@ public class ExcelParserService {
                 }
 
                 try {
-                    // Column A (0) and C (2) are identified as animal_number and location.
-                    // While not currently in our Measurement DTO, we identify them for future use.
-                    String animalNr = formatter.formatCellValue(row.getCell(COL_ANIMAL_NR)).trim();
-                    
-                    // Column C (2): Location/Pen
+                    // Extracting identifiers as Strings to preserve leading zeros or non-numeric characters
+                    String animalNr = getCleanString(row.getCell(COL_ANIMAL_NUMBER), formatter);
+                    String responderId = getCleanString(row.getCell(COL_RESPONDER), formatter);
                     String location = formatter.formatCellValue(row.getCell(COL_LOCATION)).trim();
                     
-                    // Column B (1): Responder/RFID
-                    String rfid = formatter.formatCellValue(row.getCell(COL_RFID)).trim();
-                    
-                    // Column D (3): visit_time String
-                    LocalDateTime ts = tryParseDate(row.getCell(COL_TIMESTAMP), formatter);
+                    // Date Parsing is strictly performed ONLY on Column D
+                    LocalDateTime visitTime = tryParseDate(row.getCell(COL_VISIT_TIME), formatter);
 
-                    double weight = getNumericValue(row.getCell(COL_WEIGHT));
-                    double feed = getNumericValue(row.getCell(COL_FEED));
+                    // Numeric extractions for PPT_Data metrics
                     int duration = (int) getNumericValue(row.getCell(COL_DURATION));
+                    double weight = getNumericValue(row.getCell(COL_WEIGHT));
+                    double feedIntake = getNumericValue(row.getCell(COL_FEED_INTAKE));
 
-                    // Validation: Only add if critical data (RFID and Timestamp) exists
-                    if (!rfid.isBlank() && ts != null) {
-                        results.add(new ExcelImportDTO(animalNr, rfid, location, ts, weight, feed, duration));
+                    // Validation: Responder ID and Time are mandatory for the "Historical Brain" logic
+                    if (!responderId.isBlank() && visitTime != null) {
+                        results.add(new ExcelImportDTO(
+                            animalNr, responderId, location, visitTime, duration, weight, feedIntake));
                     } else {
                         // Log exactly what was missing to help debug the specific file
-                        LOGGER.warning(String.format("Row %d rejected: RFID='%s', TS=%s", 
-                            i, rfid, (ts == null ? "NULL/Invalid Format" : "OK")));
+                        LOGGER.warning(String.format("Row %d rejected: Responder='%s', Time=%s", 
+                            i, responderId, (visitTime == null ? "NULL/Invalid Format" : "OK")));
                     }
                 } catch (Exception e) {
                     LOGGER.warning("Skipping malformed row " + i + ": " + e.getMessage());
@@ -104,6 +101,16 @@ public class ExcelParserService {
         }
         LOGGER.info("Successfully parsed " + results.size() + " valid measurement rows.");
         return results;
+    }
+
+    /**
+     * Retrieves a clean string from a cell. 
+     * Removes trailing ".0" often added by Excel for numeric IDs.
+     */
+    private String getCleanString(Cell cell, DataFormatter formatter) {
+        if (cell == null) return "";
+        String val = formatter.formatCellValue(cell).trim();
+        return val.endsWith(".0") ? val.substring(0, val.length() - 2) : val;
     }
 
     /**
