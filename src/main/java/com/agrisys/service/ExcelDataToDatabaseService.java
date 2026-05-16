@@ -7,16 +7,17 @@ import com.agrisys.model.LocationRecord;
 import com.agrisys.model.PptDataRecord;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+
+// Primær forfatter: Michael Bragt
 
 /**
  * Orchestrator service for importing Excel data into the 3NF database schema.
  * Handles multi-table inserts and transactional integrity (PS-03).
  */
-public class DataIngestionService {
-    private static final Logger LOGGER = Logger.getLogger(DataIngestionService.class.getName());
+public class ExcelDataToDatabaseService {
+    private static final Logger LOGGER = Logger.getLogger(ExcelDataToDatabaseService.class.getName());
 
     private final PigDAO pigDAO = new PigDAO();
     private final RespondersDAO respondersDAO = new RespondersDAO();
