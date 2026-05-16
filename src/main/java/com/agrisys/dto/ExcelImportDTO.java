@@ -2,9 +2,14 @@ package com.agrisys.dto;
 
 import java.time.LocalDateTime;
 
+// Primær forfatter: Michael Bragt
+
 /**
  * A decoupled Data Transfer Object representing a single row from the Excel sensor export.
  * This acts as a staging area before the data is distributed to the 3NF database tables.
+ * We use record instead of a DTO class
+ * records were introduces in Java 16 and simplifies having a object
+ * representing a data object
  *
  * @param animalNumber  Unique identifier for the biological pig (A).
  * @param responderId   The physical responder/tag ID (B).

@@ -5,8 +5,10 @@ import com.agrisys.model.RespondersRecord;
 import java.sql.*;
 import java.util.Optional;
 
+// Primær forfatter: Michael Bragt
+
 /**
- * DAO for Responders (physical hardware) management.
+ * DAO for Responders (physical tag) management.
  */
 public class RespondersDAO {
     
@@ -29,6 +31,17 @@ public class RespondersDAO {
         }
     }
 
+    /**
+     *
+     * @param responderId
+     * @return
+     * @throws SQLException
+     *
+     * We use modern Java optional, that is looking/searching and instead of the caller needing to check for null
+     * We return and optional that should be handled in the caller.
+     * This results in a fail-fast or shift-left strategy, so we implement more robust code
+     * where potential errors is found in the develop phase
+     */
     public Optional<RespondersRecord> findById(String responderId) throws SQLException {
         String sql = "SELECT responder_id, status FROM Responders WHERE responder_id = ?";
         try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
