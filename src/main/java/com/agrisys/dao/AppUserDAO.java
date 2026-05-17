@@ -5,6 +5,8 @@ import com.agrisys.model.AppUserRecord;
 import java.sql.*;
 import java.util.Optional;
 
+// Primær forfatter: Michael Bragt
+
 /**
  * DAO for the AppUser table.
  * Handles authentication and user management.

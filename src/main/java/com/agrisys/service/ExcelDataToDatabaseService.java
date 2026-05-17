@@ -78,13 +78,16 @@ public class ExcelDataToDatabaseService {
     }
 
     private int resolveLocationId(Connection conn, String name) throws SQLException {
-        return locationDAO.findByName(conn, name)
+        final String sanitizedName = (name == null || name.isBlank()) ? "Ukendt" : name.trim();
+
+        return locationDAO.findByName(conn, sanitizedName)
                 .map(LocationRecord::locationId)
                 .orElseGet(() -> {
                     try {
-                        return locationDAO.create(conn, new LocationRecord(null, name));
+                        LOGGER.info("Location '" + sanitizedName + "' not found. Creating new entry.");
+                        return locationDAO.create(conn, new LocationRecord(null, sanitizedName));
                     } catch (SQLException e) {
-                        throw new RuntimeException("Could not create location: " + name);
+                        throw new RuntimeException("Could not create location: " + sanitizedName, e);
                     }
                 });
     }

@@ -6,6 +6,8 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+// Primær forfatter: Michael Bragt
+
 /**
  * DAO for the Responder_Assignment table.
  * Manages the "Historical Brain" relationship between a Pig and a Responder.

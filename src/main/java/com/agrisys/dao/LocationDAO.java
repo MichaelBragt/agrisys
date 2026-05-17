@@ -7,11 +7,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+// Primær forfatter: Michael Bragt
+
 /**
  * DAO for the Location table.
  * Manages physical pen/station data.
  */
 public class LocationDAO {
+
+    /**
+     * Retrieves all locations.
+     */
+    public List<LocationRecord> findAll() throws SQLException {
+        List<LocationRecord> list = new ArrayList<>();
+        String sql = "SELECT location_id, location_name FROM Location";
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                list.add(map(rs));
+            }
+        }
+        return list;
+    }
 
     /**
      * Retrieves a Location by its ID.
@@ -22,8 +40,8 @@ public class LocationDAO {
      */
     public Optional<LocationRecord> findById(int id) throws SQLException {
         String sql = "SELECT location_id, location_name FROM Location WHERE location_id = ?";
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, id);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {

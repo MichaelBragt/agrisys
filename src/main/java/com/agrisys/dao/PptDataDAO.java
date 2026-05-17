@@ -5,6 +5,8 @@ import com.agrisys.model.PptDataRecord;
 import java.sql.*;
 import java.util.List;
 
+// Primær forfatter: Michael Bragt
+
 /**
  * DAO for PPT_Data. 
  * Optimized for high-volume batch inserts.

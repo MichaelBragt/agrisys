@@ -1,22 +1,33 @@
 package com.agrisys.controller;
 
+import com.agrisys.Utils.Gauge;
 import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.dto.ExcelImportDTO;
 import com.agrisys.service.ExcelDataToDatabaseService;
 import com.agrisys.service.ExcelParserService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import java.io.File;
 import java.util.List;
 
 public class HomeController {
 
+    public StackPane gaugeContainer;
     @FXML
     private Button importButton;
 
     private final ExcelParserService parserService = new ExcelParserService();
     private final ExcelDataToDatabaseService excelDataToDatabaseService = new ExcelDataToDatabaseService();
+
+    private Gauge gauge;
+
+    public void initialize() {
+        gauge = new Gauge(80);
+        gauge.updateStatus(77);
+        gaugeContainer.getChildren().add(gauge);
+    }
 
     /**
      * Handles the button click to upload and parse an Excel file.

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<StackPane fx:id="rootPane" stylesheets="@style.css" xmlns:fx="http://javafx.com/fxml/1" 
+           fx:controller="com.agrisys.controller.PigRegistrationController" prefWidth="450">
+    <VBox fx:id="formPane" spacing="15" styleClass="dialog-container">
+        <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+        <Label text="Registrer Ny Gris" styleClass="header-label"/>
+        
+        <GridPane hgap="10" vgap="10">
+            <Label text="Dyre Nr (6 cifre):" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <TextField fx:id="animalNumberField" promptText="f.eks. 123456" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+            
+            <Label text="Fødselsdato:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <DatePicker fx:id="birthDatePicker" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+            
+            <Label text="Status:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <ComboBox fx:id="statusCombo" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            
+            <Label text="Lokation:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <ComboBox fx:id="locationCombo" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+            
+            <Label text="Responder:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+            <HBox spacing="5" alignment="CENTER_LEFT" GridPane.rowIndex="4" GridPane.columnIndex="1">
+                <ComboBox fx:id="responderCombo" promptText="Vælg ledig"/>
+                <CheckBox fx:id="newResponderCheck" text="Ny"/>
+            </HBox>
+            
+            <Label fx:id="newResponderLabel" text="Ny Resp. ID (15 cifre):" visible="false" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+            <TextField fx:id="newResponderField" visible="false" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+        </GridPane>
+        
+        <HBox spacing="10" alignment="CENTER_RIGHT">
+            <Button text="Annuller" onAction="#handleCancel"/>
+            <Button text="Opret" onAction="#handleSave" styleClass="primary-button"/>
+        </HBox>
+    </VBox>
+    
+    <VBox fx:id="successPane" spacing="20" alignment="CENTER" visible="false" styleClass="dialog-container">
+        <Label text="Gris Registreret!" styleClass="success-label"/>
+        <Label fx:id="summaryLabel"/>
+        <Button text="Luk" onAction="#handleCancel"/>
+    </VBox>
+</StackPane>
