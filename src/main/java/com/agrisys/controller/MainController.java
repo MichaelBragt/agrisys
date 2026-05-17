@@ -18,7 +18,9 @@ public class MainController {
 
         // Just a line used for testing db connection
         // is to be removed
+        System.out.println("Before D");
         DbConnect connection = DbConnect.UNIQUE_CONNECT;
+        System.out.println("Before D");
 
     }
 }

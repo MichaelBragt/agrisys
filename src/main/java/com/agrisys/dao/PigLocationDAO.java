@@ -6,6 +6,8 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+// Primær forfatter: Michael Bragt
+
 /**
  * DAO for the Pig_Location table.
  * Manages the historical and current placement of pigs in locations.

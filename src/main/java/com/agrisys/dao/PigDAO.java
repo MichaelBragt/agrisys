@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+// Primær forfatter: Michael Bragt
+
 /**
  * DAO for Pig table. Implements CRUD for biological data.
  */
@@ -31,10 +33,26 @@ public class PigDAO {
         }
     }
 
+    /**
+     * Persists a new Pig record.
+     * @param conn Active connection for transaction.
+     * @param pig The pig record to save.
+     * @throws SQLException On database error.
+     */
+    public void create(Connection conn, PigRecord pig) throws SQLException {
+        String sql = "INSERT INTO Pig (animal_number, birth_date, status) VALUES (?, ?, ?)";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, pig.animalNumber());
+            pstmt.setDate(2, pig.birthDate() != null ? Date.valueOf(pig.birthDate()) : null);
+            pstmt.setString(3, pig.status());
+            pstmt.executeUpdate();
+        }
+    }
+
     public Optional<PigRecord> findByAnimalNumber(String animalNumber) throws SQLException {
         String sql = "SELECT animal_number, birth_date, status FROM Pig WHERE animal_number = ?";
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, animalNumber);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -48,8 +66,8 @@ public class PigDAO {
     public List<PigRecord> findAllActive() throws SQLException {
         List<PigRecord> pigs = new ArrayList<>();
         String sql = "SELECT animal_number, birth_date, status FROM Pig WHERE status = 'Aktiv'";
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             Statement stmt = conn.createStatement();
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 pigs.add(map(rs));

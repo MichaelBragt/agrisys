@@ -79,7 +79,7 @@ public class ExcelParserService {
                     // Extracting identifiers as Strings to preserve leading zeros or non-numeric characters
                     String animalNr = getCleanString(row.getCell(COL_ANIMAL_NUMBER), formatter);
                     String responderId = getCleanString(row.getCell(COL_RESPONDER), formatter);
-                    String location = formatter.formatCellValue(row.getCell(COL_LOCATION)).trim();
+                    String location = getCleanString(row.getCell(COL_LOCATION), formatter);
                     
                     // Date Parsing is strictly performed ONLY on Column D
                     LocalDateTime visitTime = tryParseDate(row.getCell(COL_VISIT_TIME), formatter);

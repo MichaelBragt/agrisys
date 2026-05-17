@@ -3,6 +3,8 @@ package com.agrisys.dao;
 import com.agrisys.DbConnect;
 import com.agrisys.model.RespondersRecord;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 // Primær forfatter: Michael Bragt
@@ -32,6 +34,42 @@ public class RespondersDAO {
     }
 
     /**
+     * Retrieves all responders with 'Ledig' status.
+     */
+    public List<RespondersRecord> findAllAvailable() throws SQLException {
+        List<RespondersRecord> list = new ArrayList<>();
+        String sql = "SELECT responder_id, status FROM Responders WHERE status = 'Ledig'";
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                list.add(new RespondersRecord(rs.getString("responder_id"), rs.getString("status")));
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Persists a new responder or updates existing status.
+     */
+    public void createOrUpdate(Connection conn, RespondersRecord responder) throws SQLException {
+        String sql = """
+            MERGE INTO Responders AS target
+            USING (SELECT ? AS id) AS source
+            ON (target.responder_id = source.id)
+            WHEN MATCHED THEN UPDATE SET status = ?
+            WHEN NOT MATCHED THEN INSERT (responder_id, status) VALUES (?, ?);
+            """;
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, responder.responderId());
+            pstmt.setString(2, responder.status());
+            pstmt.setString(3, responder.responderId());
+            pstmt.setString(4, responder.status());
+            pstmt.executeUpdate();
+        }
+    }
+
+    /**
      *
      * @param responderId
      * @return
@@ -44,8 +82,8 @@ public class RespondersDAO {
      */
     public Optional<RespondersRecord> findById(String responderId) throws SQLException {
         String sql = "SELECT responder_id, status FROM Responders WHERE responder_id = ?";
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, responderId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {

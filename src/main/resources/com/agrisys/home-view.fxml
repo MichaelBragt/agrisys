@@ -6,8 +6,9 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="TOP_LEFT" spacing="20.0" xmlns="http://javafx.com/javafx/21" 
-      xmlns:fx="http://javafx.com/fxml/1" 
+<?import javafx.scene.layout.StackPane?>
+<VBox alignment="TOP_LEFT" spacing="20.0" xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.agrisys.controller.HomeController"
       styleClass="view-container">
     <children>
@@ -15,5 +16,8 @@
             <Label text="Farm Performance Dashboard" styleClass="header-label" />
             <Button fx:id="importButton" text="Import Excel Data" onAction="#handleImportAction" />
         </HBox>
+        <StackPane fx:id="gaugeContainer">
+
+        </StackPane>
     </children>
 </VBox>
