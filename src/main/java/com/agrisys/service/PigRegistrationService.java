@@ -26,13 +26,21 @@ public class PigRegistrationService {
      */
     public void registerNewPig(PigRecord pig, RespondersRecord responder, int locationId) throws SQLException {
         Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        
+        // Pre-flight check: Validation logic (PS-02)
+        // Ensure the responder is not already active on another pig
+        boolean isResponderBusy = assignmentDAO.findActiveAssignmentByResponderId(conn, responder.responderId()).isPresent();
+        if (isResponderBusy) {
+            throw new SQLException("Responder " + responder.responderId() + " er allerede i brug på en anden gris.", "23000");
+        }
+
         try {
             conn.setAutoCommit(false);
 
             // 1. Create Pig
             pigDAO.create(conn, pig);
 
-            // 2. Ensure Responder exists and is marked as 'I brug'
+            // 2. Ensure Responder exists and is marked as 'I brug' (Hardware inventory management)
             RespondersRecord activeResponder = new RespondersRecord(responder.responderId(), "I brug");
             respondersDAO.createOrUpdate(conn, activeResponder);
 

@@ -87,7 +87,8 @@ BEGIN TRY
     CREATE INDEX IX_PPT_Data_visit_time ON PPT_Data(visit_time);
 
     -- Filtreret index for hurtig opslag af aktive tags (Best practice for historik-tabeller)
-    CREATE INDEX IX_Responder_Assignment_Active ON Responder_Assignment(assignment_id) WHERE date_removed IS NULL;
+    -- ÆNDRET: Tilføjet UNIQUE for at sikre at én responder kun kan være aktiv på én gris ad gangen.
+    CREATE UNIQUE INDEX UIX_Responder_Assignment_Active_Responder ON Responder_Assignment(responder_id) WHERE date_removed IS NULL;
 
     -- Hurtigt opslag på grise der ikke er flyttet endnu (nuværende lokation)
     CREATE INDEX IX_Pig_Location_Current ON Pig_Location(animal_number, location_id)
