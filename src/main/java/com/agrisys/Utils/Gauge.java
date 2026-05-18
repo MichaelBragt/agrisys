@@ -33,21 +33,18 @@ public class Gauge extends StackPane {
         double thickness = radius * 0.15;
         double totalSize = (radius * 2) + thickness;
 
-        // 1. Maintain the outer bounds so it plays nice in FXML
         this.setMinSize(totalSize, totalSize);
         this.setPrefSize(totalSize, totalSize);
         this.setMaxSize(totalSize, totalSize);
 
-        // 2. Background Track - Explicitly define the center at (radius, radius)
         Circle backgroundTrack = new Circle(radius, radius, radius);
         backgroundTrack.setFill(Color.TRANSPARENT);
         backgroundTrack.setStroke(Color.web("#E0E0E0"));
         backgroundTrack.setStrokeWidth(thickness);
 
-        // 3. Status Arc - Explicitly lock the center to (radius, radius)
         statusArc = new Arc();
-        statusArc.setCenterX(radius); // Locked X coordinate
-        statusArc.setCenterY(radius); // Locked Y coordinate
+        statusArc.setCenterX(radius);
+        statusArc.setCenterY(radius);
         statusArc.setRadiusX(radius);
         statusArc.setRadiusY(radius);
         statusArc.setStartAngle(90);
@@ -55,52 +52,70 @@ public class Gauge extends StackPane {
         statusArc.setFill(Color.TRANSPARENT);
         statusArc.setStrokeWidth(thickness);
 
-        // We group the circle and the arch to be able to consistens place them
-        // on top of eachother so we can make the coloring in the gauge
-        // depending on how "filled" it is
         Group shapeLayer = new Group(backgroundTrack, statusArc);
 
-        // 5. Central Text elements
-        valueText = new Text("Ingen Måling");
-        valueText.setFont(Font.font("Arial", radius * 0.4));
+        valueText = new Text("N/A");
+        valueText.setFont(Font.font("Arial", radius * 0.35));
 
-        statusLabel = new Text("N/A");
-        statusLabel.setFont(Font.font("Arial", radius * 0.18));
+        statusLabel = new Text("Venter...");
+        statusLabel.setFont(Font.font("Arial", radius * 0.16));
 
         VBox textContainer = new VBox(2, valueText, statusLabel);
         textContainer.setAlignment(Pos.CENTER);
 
-        // 6. Add the fused shape Group and the Text box to the StackPane
-        // The StackPane will perfectly center the Group as one unit.
         this.getChildren().addAll(shapeLayer, textContainer);
 
-        // Initialize state
-        updateStatus(0);
+        // Setter en standard starttilstand
+        setFcrValue(0.0);
     }
 
     /**
-     * Method for setting and updating the gauge value
-     * @param value
+     * Oppdaterer gaugen dynamisk basert på en biologisk FCR-verdi (typisk 1.5 til 4.5)
      */
-    public void updateStatus(double value) {
-        double clampedValue = Math.max(0, Math.min(100, value));
-        double targetLength = -(clampedValue / 100.0) * 360.0;
+    public void setFcrValue(double fcr) {
+        if (fcr <= 0) {
+            valueText.setText("N/A");
+            statusLabel.setText("INGEN DATA");
+            statusArc.setLength(0);
+            statusArc.setStroke(Color.GRAY);
+            return;
+        }
+
+        // 1. Vis verdien med 2 desimaler i midten
+        valueText.setText(String.format("%.2f", fcr));
+
+        // 2. Map FCR-verdien til en prosentbue (1.5 er "perfekt/full", 4.5 er "kritisk/tom")
+        // Vi klamper verdien mellom 1.5 og 4.5 så buen ikke går amok
+        double clampedFcr = Math.max(1.5, Math.min(4.5, fcr));
+
+        // Beregn en faktor fra 0.0 (dårligst) til 1.0 (best)
+        double goodnessFactor = (4.5 - clampedFcr) / (4.5 - 1.5);
+
+        // Gjør faktoren om til grader på sirkelen (fra 0 til -360 grader)
+        double targetLength = -goodnessFactor * 360.0;
         statusArc.setLength(targetLength);
 
-        valueText.setText(String.format("%.0f%%", clampedValue));
+        // 3. DYNAMISK FARGE-FADE (Interpolation)
+        Color godFcrFarge = Color.web("#34C759"); // Grønn
+        Color middelsFcrFarge = Color.web("#FFCC00"); // Gul
+        Color daarligFcrFarge = Color.web("#FF3B30"); // Rød
 
-        if (clampedValue < 40) {
-            statusArc.setStroke(Color.web("#FF3B30"));
-            statusLabel.setText("CRITICAL");
-            statusLabel.setFill(Color.web("#FF3B30"));
-        } else if (clampedValue < 75) {
-            statusArc.setStroke(Color.web("#FFCC00"));
-            statusLabel.setText("WARNING");
-            statusLabel.setFill(Color.web("#FFCC00"));
+        Color dynamiskFarge;
+
+        if (goodnessFactor > 0.5) {
+            // Fade mellom Gul (0.5) og Grønn (1.0)
+            double t = (goodnessFactor - 0.5) * 2.0;
+            dynamiskFarge = middelsFcrFarge.interpolate(godFcrFarge, t);
+            statusLabel.setText("OPTIMAL UTNYTTELSE");
         } else {
-            statusArc.setStroke(Color.web("#34C759"));
-            statusLabel.setText("OPTIMAL");
-            statusLabel.setFill(Color.web("#34C759"));
+            // Fade mellom Rød (0.0) og Gul (0.5)
+            double t = goodnessFactor * 2.0;
+            dynamiskFarge = daarligFcrFarge.interpolate(middelsFcrFarge, t);
+            statusLabel.setText("HØYT FODERFORBRUK");
         }
+
+        // Push fargen til både buen og tekst-labelen
+        statusArc.setStroke(dynamiskFarge);
+        statusLabel.setFill(dynamiskFarge);
     }
 }
