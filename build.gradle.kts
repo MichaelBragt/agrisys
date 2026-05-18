@@ -27,7 +27,7 @@ tasks.withType<JavaCompile> {
 
 application {
     mainModule.set("com.agrisys")
-    mainClass.set("com.agrisys.HelloApplication")
+    mainClass.set("com.agrisys.AgrisysApplication")
 }
 
 javafx {

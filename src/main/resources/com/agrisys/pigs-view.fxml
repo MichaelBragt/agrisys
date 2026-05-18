@@ -4,6 +4,8 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.text.Font?>
 
 <?import javafx.scene.layout.StackPane?>
@@ -16,9 +18,24 @@
             <Label text="Pig Management (Grise)" styleClass="header-label" />
             <Button text="+ Registrer Ny Gris" onAction="#handleOpenRegistration" styleClass="action-button"/>
         </HBox>
-        <StackPane fx:id="gaugeContainer2">
-
-        </StackPane>
+        
+        <HBox spacing="15" VBox.vgrow="ALWAYS">
+            <VBox fx:id="sideContent" prefWidth="250.0" minWidth="200.0" styleClass="sidebar-container">
+                <Label text="Dashboard Overblik" style="-fx-font-weight: bold;"/>
+                <!-- Other visual elements like the gauge can be moved here -->
+                <StackPane fx:id="gaugeContainer2" />
+            </VBox>
+            
+            <TableView fx:id="pigTable" HBox.hgrow="ALWAYS" styleClass="modern-table">
+                <columns>
+                    <TableColumn fx:id="colAnimalNumber" text="Dyr Nr." prefWidth="120" />
+                    <TableColumn fx:id="colResponder" text="Responder ID" prefWidth="150" />
+                    <TableColumn fx:id="colLocation" text="Lokation" prefWidth="100" />
+                    <TableColumn fx:id="colBirthDate" text="Fødselsdato" prefWidth="120" />
+                    <TableColumn fx:id="colWeight" text="Vægt (kg)" prefWidth="100" />
+                    <TableColumn fx:id="colFCR" text="FCR" prefWidth="80" />
+                </columns>
+            </TableView>
+        </HBox>
     </children>
-
 </VBox>
