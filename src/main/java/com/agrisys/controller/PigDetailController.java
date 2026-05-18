@@ -1,0 +1,138 @@
+package com.agrisys.controller;
+
+import com.agrisys.Utils.*;
+import com.agrisys.dto.*;
+import com.agrisys.Utils.UIErrorReport;
+import com.agrisys.model.PigSummary;
+import com.agrisys.service.PigDetailsService;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.scene.layout.StackPane;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Controller for the Pig Detail popup..
+ */
+public class PigDetailController {
+    // Declaring varous UI elements
+    @FXML private Label lblAnimalNumber, lblResponderId, lblLocation, lblWeight;
+    @FXML private DatePicker dpBirthDate;
+    @FXML private ComboBox<String> cbStatus;
+    @FXML private StackPane gaugeContainer, chartContainer;
+    @FXML private Button btnEdit, btnSave, btnRemoveResponder;
+
+    // declaring services, DTO's and vars we need
+    private final PigDetailsService service = new PigDetailsService();
+    private PigDetailDTO currentPig;
+    private boolean isEditMode = false;
+
+    @FXML
+    public void initialize() {
+        cbStatus.getItems().addAll("Aktiv", "Slagtet", "Syg");
+    }
+
+    public void initData(PigSummary summary) {
+        refreshData(summary.animalNumber());
+    }
+
+    private void refreshData(String animalNumber) {
+        try {
+            Optional<PigDetailDTO> details = service.getDetailedInfo(animalNumber);
+            details.ifPresent(dto -> {
+                this.currentPig = dto;
+                lblAnimalNumber.setText(dto.animalNumber());
+                lblResponderId.setText(dto.responderId() != null ? dto.responderId() : "Ingen");
+                lblLocation.setText(dto.locationName() != null ? dto.locationName() : "N/A");
+                dpBirthDate.setValue(dto.birthDate());
+                cbStatus.setValue(dto.status());
+                
+                btnRemoveResponder.setDisable(dto.responderId() == null);
+                
+                // Handle potential 0 or null weights
+                lblWeight.setText(dto.currentWeight() > 0 ? String.format("%.2f kg", dto.currentWeight()) : "Ingen data");
+
+                setupVisuals(dto);
+            });
+        } catch (SQLException e) {
+            UIErrorReport.showDatabaseError(e);
+        }
+    }
+
+    private void setupVisuals(PigDetailDTO dto) {
+        // 1. Setup Gauge
+        gaugeContainer.getChildren().clear();
+        Gauge fcrGauge = new Gauge(70);
+        fcrGauge.setFcrValue(dto.fcr()); // Real calculation from DB
+        gaugeContainer.getChildren().add(fcrGauge);
+
+        // 2. Setup Chart using existing ChartBuilder
+        if (dto.assignmentId() != null) {
+            try {
+                ChartSeriesData series = service.getPigWeightHistory(dto.animalNumber(), dto.assignmentId());
+                chartContainer.getChildren().clear();
+                chartContainer.getChildren().add(AgrisysChartBuilder.buildLineChart(
+                    "", "Dato", "Vægt (kg)", "Vægt", List.of(series)
+                ));
+            } catch (SQLException e) {
+                System.err.println("Could not load chart data: " + e.getMessage());
+            }
+        }
+    }
+
+    @FXML
+    private void handleToggleEdit() {
+        isEditMode = !isEditMode;
+        dpBirthDate.setDisable(!isEditMode);
+        cbStatus.setDisable(!isEditMode);
+        btnSave.setVisible(isEditMode);
+        btnEdit.setText(isEditMode ? "Annuller" : "Rediger");
+    }
+
+    @FXML
+    private void handleSave() {
+        String selectedStatus = cbStatus.getValue();
+        LocalDate selectedBirthDate = dpBirthDate.getValue();
+        boolean shouldRemove = false;
+
+        if (!selectedStatus.equals("Aktiv") && currentPig.responderId() != null) {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, 
+                "Ønsker du at fjerne responder " + currentPig.responderId() + " fra denne gris?", 
+                ButtonType.YES, ButtonType.NO);
+            alert.setTitle("Fjern Responder");
+            Optional<ButtonType> result = alert.showAndWait();
+            shouldRemove = (result.isPresent() && result.get() == ButtonType.YES);
+        }
+
+        try {
+            service.updatePigDetails(currentPig.animalNumber(), selectedStatus, selectedBirthDate, shouldRemove, currentPig.responderId());
+            handleToggleEdit();
+            refreshData(currentPig.animalNumber());
+        } catch (SQLException e) {
+            UIErrorReport.showDatabaseError(e);
+        }
+    }
+
+    @FXML
+    private void handleRemoveResponder() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, 
+            "Er du sikker på at du vil fjerne responderen nu?", ButtonType.YES, ButtonType.NO);
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.YES) {
+                try {
+                    service.updatePigDetails(currentPig.animalNumber(), currentPig.status(), currentPig.birthDate(), true, currentPig.responderId());
+                    refreshData(currentPig.animalNumber());
+                } catch (SQLException e) {
+                    UIErrorReport.showDatabaseError(e);
+                }
+            }
+        });
+    }
+
+    @FXML
+    private void handleClose() {
+        lblAnimalNumber.getScene().getWindow().hide();
+    }
+}

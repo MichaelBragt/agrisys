@@ -2,7 +2,9 @@ package com.agrisys.dao;
 
 import com.agrisys.DbConnect;
 import com.agrisys.model.PptDataRecord;
+import com.agrisys.dto.ChartPoint;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 // Primær forfatter: Michael Bragt
@@ -70,7 +72,29 @@ public class PptDataDAO {
         }
     }
 
-    public List<PptDataRecord> findByAssignmentId(int assignmentId) throws SQLException {
-        return List.of(); 
+    /**
+     * Fetches weight history for a specific assignment.
+     * Used for individual pig charts.
+     *
+     * @param assignmentId The assignment to look up.
+     * @return List of ChartPoints (Time vs Weight).
+     */
+    public List<ChartPoint> getWeightHistory(int assignmentId) throws SQLException {
+        List<ChartPoint> points = new ArrayList<>();
+        String sql = "SELECT visit_time, pig_weight FROM PPT_Data WHERE assignment_id = ? ORDER BY visit_time ASC";
+        
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, assignmentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    points.add(new ChartPoint(
+                        rs.getTimestamp("visit_time").toLocalDateTime().toLocalDate().toString(),
+                        rs.getDouble("pig_weight")
+                    ));
+                }
+            }
+        }
+        return points;
     }
 }

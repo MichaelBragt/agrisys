@@ -110,8 +110,10 @@ public class ExcelParserService {
     /**
      * Retrieves a clean string from a cell. 
      * Removes trailing ".0" often added by Excel for numeric IDs.
+     * we have NO scope keyword here for test purposes
+     * No keyword is package private scope, that way our tests can use it
      */
-    private String getCleanString(Cell cell, DataFormatter formatter) {
+    String getCleanString(Cell cell, DataFormatter formatter) {
         if (cell == null) return "";
         String val = formatter.formatCellValue(cell).trim();
         return val.endsWith(".0") ? val.substring(0, val.length() - 2) : val;
@@ -119,8 +121,9 @@ public class ExcelParserService {
 
     /**
      * Attempts multiple strategies to parse a date from a cell.
+     * package private scope
      */
-    private LocalDateTime tryParseDate(Cell cell, DataFormatter formatter) {
+    LocalDateTime tryParseDate(Cell cell, DataFormatter formatter) {
         if (cell == null) return null;
 
         // Strategy 1: Native Excel Date object
@@ -175,8 +178,9 @@ public class ExcelParserService {
 
     /**
      * Checks if a row is effectively empty to prevent processing ghost rows.
+     * privare package scope for test purposes
      */
-    private boolean isRowEmpty(Row row) {
+    boolean isRowEmpty(Row row) {
         for (int c = row.getFirstCellNum(); c < row.getLastCellNum(); c++) {
             Cell cell = row.getCell(c);
             if (cell != null && cell.getCellType() != CellType.BLANK) {

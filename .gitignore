@@ -1,8 +1,9 @@
 .gradle
 build/
+out/
+log/
+*.log
 !gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
@@ -13,11 +14,9 @@ build/
 *.iws
 *.iml
 *.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
 
-### Eclipse ###
+
+### Eclipse & VS Code ###
 .apt_generated
 .classpath
 .factorypath
@@ -41,3 +40,10 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Project Specific ###
+# Secrets: NEVER push the .env file containing DB credentials
+.env
+
+# Toolchain configuration
+.sdkmanrc

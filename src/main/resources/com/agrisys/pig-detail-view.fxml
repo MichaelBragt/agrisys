@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="20" prefWidth="900" prefHeight="650" stylesheets="@style.css" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.agrisys.controller.PigDetailController">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+    
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+        <!-- Venstre: Info boks & Redigering -->
+        <VBox spacing="15" prefWidth="350" styleClass="sidebar-container">
+            <Label text="Gris Detaljer" styleClass="header-label"/>
+            
+            <GridPane hgap="10" vgap="12">
+                <Label text="Dyre Nr:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblAnimalNumber" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                
+                <Label text="Responder ID:" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <HBox spacing="5" GridPane.rowIndex="1" GridPane.columnIndex="1" alignment="CENTER_LEFT">
+                    <Label fx:id="lblResponderId" />
+                    <Button fx:id="btnRemoveResponder" text="Fjern" onAction="#handleRemoveResponder" style="-fx-font-size: 10px;"/>
+                </HBox>
+                
+                <Label text="Lokation:" GridPane.rowIndex="2" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblLocation" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                
+                <Label text="Fødselsdato:" GridPane.rowIndex="3" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <DatePicker fx:id="dpBirthDate" disable="true" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                
+                <Label text="Status:" GridPane.rowIndex="4" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <ComboBox fx:id="cbStatus" disable="true" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                
+                <Label text="Aktuel Vægt:" GridPane.rowIndex="5" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblWeight" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+            </GridPane>
+            
+            <Separator/>
+            
+            <HBox spacing="10" alignment="CENTER">
+                <Button fx:id="btnEdit" text="Rediger" onAction="#handleToggleEdit" prefWidth="100"/>
+                <Button fx:id="btnSave" text="Gem" onAction="#handleSave" prefWidth="100" visible="false"/>
+            </HBox>
+
+            <VBox VBox.vgrow="ALWAYS" alignment="BOTTOM_CENTER" spacing="10">
+                <Label text="Aktuel FCR Status" style="-fx-font-weight: bold;"/>
+                <StackPane fx:id="gaugeContainer" prefHeight="180"/>
+            </VBox>
+        </VBox>
+        
+        <!-- Højre: Vægtgraf -->
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Vægtudvikling over tid" styleClass="header-label"/>
+            <StackPane fx:id="chartContainer" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 10;"/>
+            
+            <HBox alignment="CENTER_RIGHT" spacing="10">
+                <Button text="Luk" onAction="#handleClose" styleClass="action-button"/>
+            </HBox>
+        </VBox>
+    </HBox>
+</VBox>

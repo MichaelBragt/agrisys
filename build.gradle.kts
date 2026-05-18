@@ -17,7 +17,7 @@ val junitVersion = "5.12.1"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(24)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -39,6 +39,7 @@ dependencies {
     implementation("io.github.cdimascio:dotenv-java:3.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("com.microsoft.sqlserver:mssql-jdbc:12.2.0.jre11") // Or the latest version compatible with your Java version
     // Apache POI for Excel file parsing
     implementation("org.apache.poi:poi:5.2.5") // Core POI components
@@ -49,6 +50,30 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    
+    // Enforce visibility of test results in the terminal
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+
+    // Explicitly print the report path upon completion
+    addTestListener(object : TestListener {
+        override fun beforeSuite(suite: TestDescriptor) {}
+        override fun beforeTest(testDescriptor: TestDescriptor) {}
+        override fun afterTest(testDescriptor: TestDescriptor, result: TestResult) {}
+        override fun afterSuite(suite: TestDescriptor, result: TestResult) {
+            if (suite.parent == null) { // Only for the root suite
+                println("\nTest result: ${result.resultType}")
+                println("Test summary: ${result.testCount} tests, " +
+                        "${result.successfulTestCount} passed, " +
+                        "${result.failedTestCount} failed, " +
+                        "${result.skippedTestCount} skipped")
+                println("Report file: ${layout.buildDirectory.get()}/reports/tests/test/index.html\n")
+            }
+        }
+    })
 }
 
 jlink {

@@ -14,7 +14,7 @@ public final class AppConfig {
     public static final String APP_TITLE = "Agrisys - Precision Agriculture System";
     
     // Window Size Constraints
-    public static final double MIN_WIDTH = 1024.0;
+    public static final double MIN_WIDTH = 1280.0;
     public static final double MIN_HEIGHT = 768.0;
 
     // FXML Paths
