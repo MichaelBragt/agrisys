@@ -44,6 +44,3 @@ bin/
 ### Project Specific ###
 # Secrets: NEVER push the .env file containing DB credentials
 .env
-
-# Toolchain configuration
-.sdkmanrc
