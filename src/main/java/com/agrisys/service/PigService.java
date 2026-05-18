@@ -8,6 +8,8 @@ import java.util.List;
 /**
  * Service layer for Pig management.
  * Handles business rules and aggregates data from DAOs.
+ * We have this service method because we need to calculate FRC
+ * for the data after we have recieved it from the database.
  */
 public class PigService {
     private final PigDAO pigDAO;

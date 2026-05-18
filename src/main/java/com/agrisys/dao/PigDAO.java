@@ -3,6 +3,7 @@ package com.agrisys.dao;
 import com.agrisys.DbConnect;
 import com.agrisys.model.PigRecord;
 import com.agrisys.model.PigSummary;
+import com.agrisys.dto.PigDetailDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -130,5 +131,50 @@ public class PigDAO {
             }
         }
         return summaries;
+    }
+
+    /**
+     * Fetches full details for a specific pig, including the active responder and location.
+     * @param animalNumber The unique ID of the pig.
+     * @return PigDetailDTO containing aggregated state.
+     */
+    public Optional<PigDetailDTO> getPigDetail(String animalNumber) throws SQLException {
+        String sql = """
+            SELECT 
+                p.animal_number, 
+                ra.responder_id, 
+                ra.assignment_id,
+                p.birth_date,
+                p.status,
+                l.location_name,
+                (SELECT TOP 1 pig_weight FROM PPT_Data WHERE assignment_id = ra.assignment_id ORDER BY visit_time DESC) as weight,
+                (SELECT SUM(feed_intake) FROM PPT_Data WHERE assignment_id = ra.assignment_id) as total_feed
+            FROM Pig p
+            LEFT JOIN Responder_Assignment ra ON p.animal_number = ra.animal_number AND ra.date_removed IS NULL
+            LEFT JOIN Pig_Location pl ON p.animal_number = pl.animal_number AND pl.departed_at IS NULL
+            LEFT JOIN Location l ON pl.location_id = l.location_id
+            WHERE p.animal_number = ?
+            """;
+
+        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, animalNumber);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    double weight = rs.getDouble("weight");
+                    double totalFeed = rs.getDouble("total_feed");
+                    // Simple FCR logic for display; real FCR logic would reside in Business Layer
+                    double fcr = totalFeed > 0 ? totalFeed / (weight > 0 ? weight : 1) : 0.0;
+                    
+                    return Optional.of(new PigDetailDTO(
+                        rs.getString("animal_number"), rs.getString("responder_id"),
+                        rs.getObject("assignment_id") != null ? rs.getInt("assignment_id") : null,
+                        rs.getDate("birth_date") != null ? rs.getDate("birth_date").toLocalDate() : null,
+                        rs.getString("status"), weight, fcr, rs.getString("location_name")
+                    ));
+                }
+            }
+        }
+        return Optional.empty();
     }
 }

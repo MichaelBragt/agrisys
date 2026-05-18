@@ -24,6 +24,11 @@
                 <fx:include source="location-view.fxml" />
             </content>
           </Tab>
+            <Tab text="Handlinger">
+                <content>
+                    <fx:include source="handlinger-view.fxml" />
+                </content>
+            </Tab>
         </tabs>
       </TabPane>
    </children>

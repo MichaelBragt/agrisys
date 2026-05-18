@@ -2,6 +2,7 @@ package com.agrisys.controller;
 
 import com.agrisys.Utils.AgrisysChartBuilder;
 import com.agrisys.Utils.Gauge; // Sørg for at importere jeres Gauge klasse
+import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.dto.ChartSeriesData;
 import com.agrisys.model.PigSummary;
 import com.agrisys.service.ChartService;
@@ -27,6 +28,7 @@ import java.util.List;
 
 public class PigsController {
 
+    // We declare table column types and datatypes here
     @FXML private TableView<PigSummary> pigTable;
     @FXML private TableColumn<PigSummary, String> colAnimalNumber;
     @FXML private TableColumn<PigSummary, String> colResponder;
@@ -43,7 +45,7 @@ public class PigsController {
 
     private final PigService pigService;
     private final ChartService chartService;
-    private final ObservableList<PigSummary> masterData = FXCollections.observableArrayList();
+    private final ObservableList<PigSummary> pigSummaries = FXCollections.observableArrayList();
 
     public PigsController() {
         this.pigService = new PigService();
@@ -52,9 +54,13 @@ public class PigsController {
 
     @FXML
     public void initialize() {
+        // initialize is a javafx special function that it called once
+        // when the view is loaded, here we setup the table and load the data
         setupTable();
         loadData();
 
+        // We push the rendering of the graphs to the end of the java thread
+        // to make sure the table gets rendered first
         Platform.runLater(() -> {
             indlaesBestandGraf();
             indlaesVaegtGraf();
@@ -62,6 +68,10 @@ public class PigsController {
         });
     }
 
+    /**
+     * Here we setup the table according to the pig summary DTO so our
+     * table fits the data it will present in the UI
+     */
     private void setupTable() {
         colAnimalNumber.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().animalNumber()));
         colResponder.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().responderId()));
@@ -70,11 +80,32 @@ public class PigsController {
         colWeight.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().weight()));
         colFCR.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().fcr()));
 
-        pigTable.setItems(masterData);
+        // Here we telle the table to subscribe to the pigSummaries list
+        // the setItems method for tableviews is what this is meant for
+        pigTable.setItems(pigSummaries);
+
+        // Here we implement functionality to double-click a row in the table (PS-01)
+        // for opening a detailed view for the pig in the selected row
+        pigTable.setRowFactory(tv -> {
+            javafx.scene.control.TableRow<PigSummary> row = new javafx.scene.control.TableRow<>();
+            row.setOnMouseClicked(event -> {
+                // we check if we get a doubleclick event And that row is not empty
+                if (event.getClickCount() == 2 && (!row.isEmpty())) {
+                    // if requirements are met we call the handleOpenDetailView and
+                    // pass in the PigSummary item object from the row
+                    handleOpenDetailView(row.getItem());
+                }
+            });
+            return row;
+        });
     }
 
+    /**
+     * Loads the pig data from pigSummaries List into the table.
+     * called in initialize and everywhere else when we want the table to update
+     */
     private void loadData() {
-        masterData.setAll(pigService.getActivePigDashboardData());
+        pigSummaries.setAll(pigService.getActivePigDashboardData());
     }
 
     private void indlaesBestandGraf() {
@@ -125,6 +156,26 @@ public class PigsController {
 
         } catch (Exception e) {
             System.err.println("Kunne ikke oppdatere live status gauge: " + e.getMessage());
+        }
+    }
+
+    private void handleOpenDetailView(PigSummary selectedPig) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/agrisys/pig-detail-view.fxml"));
+            Parent root = loader.load();
+
+            PigDetailController controller = loader.getController();
+            controller.initData(selectedPig);
+
+            Stage stage = new Stage();
+            stage.setTitle("Detaljer for Gris: " + selectedPig.animalNumber());
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            stage.showAndWait();
+            
+            loadData(); // Refresh table after possible edits
+        } catch (IOException e) {
+            UIErrorReport.showDatabaseError(e);
         }
     }
 
