@@ -1,11 +1,15 @@
 package com.agrisys.controller;
 
+import com.agrisys.Utils.AgrisysChartBuilder;
 import com.agrisys.Utils.Gauge;
 import com.agrisys.Utils.UIErrorReport;
+import com.agrisys.dto.ChartSeriesData;
 import com.agrisys.dto.ExcelImportDTO;
+import com.agrisys.service.ChartService; // Vores nye service
 import com.agrisys.service.ExcelDataToDatabaseService;
 import com.agrisys.service.ExcelParserService;
 import javafx.fxml.FXML;
+import javafx.scene.chart.LineChart;
 import javafx.scene.control.Button;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
@@ -14,19 +18,70 @@ import java.util.List;
 
 public class HomeController {
 
-    public StackPane gaugeContainer;
+    @FXML
+    public StackPane gaugeContainer; // Refererer til containeren i jeres home-view.fxml
     @FXML
     private Button importButton;
 
     private final ExcelParserService parserService = new ExcelParserService();
     private final ExcelDataToDatabaseService excelDataToDatabaseService = new ExcelDataToDatabaseService();
+    private final ChartService chartService = new ChartService(); // Instans af graf-servicen
 
-    private Gauge gauge;
-
+    @FXML
     public void initialize() {
-        gauge = new Gauge(80);
-        gauge.updateStatus(77);
-        gaugeContainer.getChildren().add(gauge);
+        // Opdaterer skærmen med vores live FCR-graf fra databasen
+        opdaterDashboardGraf();
+    }
+
+    /**
+     * Henter data fra databasen og tegner FCR-linegrafen i UI'et
+     */
+    /**
+     * Henter data fra databasen og tegner FCR-linegrafen i UI'et, eller viser fallback gauge.
+     */
+    private void opdaterDashboardGraf() {
+        try {
+            // 1. Hent data-serien via jeres SQL-query
+            ChartSeriesData fcrData = chartService.hentFcrTrendForBestand();
+
+            // 2. SIKRING: Hvis databasen er tom, viser vi vores nye FCR-gauge som fallback med det samme
+            if (fcrData == null || fcrData.points().isEmpty()) {
+                System.out.println("--> Ingen data fundet i databasen endnu. Viser fallback gauge.");
+                visFallbackGauge();
+                return;
+            }
+
+            // 3. Byg det generiske LineChart vha. jeres AgrisysChartBuilder
+            LineChart<String, Number> fcrChart = AgrisysChartBuilder.buildLineChart(
+                    "Foderudnyttelse (FCR Ratio) - Udvikling over tid",
+                    "Dato (ÅR-MD-DAG)",
+                    "FCR Værdi",
+                    "FCR", // <--- DET ER DENNE HER DU MANGLER!
+                    List.of(fcrData)
+            );
+
+            // 4. Opdater containeren
+            gaugeContainer.getChildren().clear();
+            gaugeContainer.getChildren().add(fcrChart);
+            System.out.println("--> Dashboard graf opdateret succesfuldt.");
+
+        } catch (Exception e) {
+            System.out.println("Kunne ikke loade live-graf, viser standard gauge: " + e.getMessage());
+            visFallbackGauge();
+        }
+    }
+
+    /**
+     * Hjælpemetode til at vise den nye opdaterede Gauge, hvis databasen fejler eller er tom.
+     */
+    private void visFallbackGauge() {
+        gaugeContainer.getChildren().clear();
+        Gauge fallbackGauge = new Gauge(80);
+
+        // Vi sætter en realistisk standard FCR-værdi (f.eks. 2.85) i stedet for 77%
+        fallbackGauge.setFcrValue(2.85);
+
+        gaugeContainer.getChildren().add(fallbackGauge);
     }
 
     /**
@@ -37,26 +92,26 @@ public class HomeController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Vælg Excel fil");
         fileChooser.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter("Excel Files", "*.xlsx")
+                new FileChooser.ExtensionFilter("Excel Files", "*.xlsx")
         );
 
         File selectedFile = fileChooser.showOpenDialog(importButton.getScene().getWindow());
 
         if (selectedFile != null) {
             try {
-                // Step 1: Parse to DTOs
                 List<ExcelImportDTO> rawData = parserService.parseExcel(selectedFile);
-                
-                // Step 2: (To be implemented) Pass rawData to a Business Logic Service
-
                 excelDataToDatabaseService.processImport(rawData);
-                // that handles the DAOs and database distribution.
+
                 System.out.println("Successfully parsed " + rawData.size() + " rows.");
-                
+
+                // EFFEKTIVT: Når importen er færdig, genindlæser vi grafen live
+                // så landmanden kan se de 2.242 nye punkter på skærmen med det samme!
+                opdaterDashboardGraf();
+
                 UIErrorReport.showAlert(
-                    "Import færdig", 
-                    "Data er indlæst", 
-                    rawData.size() + " rækker blev fundet i filen."
+                        "Import færdig",
+                        "Data er indlæst i databasen",
+                        rawData.size() + " rækker blev synkroniseret."
                 );
 
             } catch (Exception e) {

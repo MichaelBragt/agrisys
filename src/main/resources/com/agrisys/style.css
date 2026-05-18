@@ -78,3 +78,65 @@
     -fx-font-size: 28px;
     -fx-font-weight: bold;
 }
+
+/* ==========================================================================
+   Agrisys Custom Chart Styling (Design for Change)
+   ========================================================================== */
+
+/* Baggrunden på selve diagramområdet */
+.chart-plot-background {
+    -fx-background-color: #f8fafc; /* Meget lys slate grå i stedet for hvid */
+}
+
+/* Gitterlinjerne i baggrunden */
+.chart-alternative-row-fill {
+    -fx-fill: transparent;
+}
+.chart-vertical-grid-lines {
+    -fx-stroke: #e2e8f0;
+}
+.chart-horizontal-grid-lines {
+    -fx-stroke: #e2e8f0;
+}
+
+/* Selve akserne og tallene/teksten på dem */
+.axis {
+    -fx-tick-label-fill: -agri-text-dark;
+    -fx-font-weight: bold;
+}
+.axis-label {
+    -fx-text-fill: -agri-primary;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* Selve trendlinjen (Series 0) */
+.default-color0.chart-series-line {
+    -fx-stroke: -agri-primary; /* Deep Tech Blue */
+    -fx-stroke-width: 3px;
+}
+
+/* De små cirkler/datapunkter på linjen */
+.default-color0.chart-line-symbol {
+    -fx-background-color: -agri-accent, white; /* Azure blå kant med hvid midte */
+    -fx-background-radius: 5px;
+    -fx-padding: 5px;
+}
+
+/* Diagrammets overskrift */
+.chart-title {
+    -fx-text-fill: -agri-primary;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+/* Forklaringen i bunden (Legend) */
+.chart-legend {
+    -fx-background-color: #f1f5f9;
+    -fx-background-radius: 5px;
+    -fx-padding: 8px;
+}
+.chart-legend-item {
+    -fx-text-fill: -agri-text-dark;
+    -fx-font-weight: bold;
+}

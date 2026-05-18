@@ -6,9 +6,9 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.text.Font?>
-
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.geometry.Insets?>
+
 <VBox alignment="TOP_LEFT" spacing="20.0" xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.agrisys.controller.PigsController"
@@ -16,26 +16,48 @@
     <children>
         <HBox spacing="20" alignment="CENTER_LEFT">
             <Label text="Pig Management (Grise)" styleClass="header-label" />
-            <Button text="+ Registrer Ny Gris" onAction="#handleOpenRegistration" styleClass="action-button"/>
         </HBox>
-        
-        <HBox spacing="15" VBox.vgrow="ALWAYS">
-            <VBox fx:id="sideContent" prefWidth="250.0" minWidth="200.0" styleClass="sidebar-container">
-                <Label text="Dashboard Overblik" style="-fx-font-weight: bold;"/>
-                <!-- Other visual elements like the gauge can be moved here -->
-                <StackPane fx:id="gaugeContainer2" />
+
+        <HBox spacing="20" VBox.vgrow="ALWAYS">
+
+            <VBox spacing="10" HBox.hgrow="ALWAYS" maxWidth="800.0">
+                <TableView fx:id="pigTable" VBox.vgrow="ALWAYS" styleClass="modern-table">
+                    <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                    </columnResizePolicy>
+                    <columns>
+                        <TableColumn fx:id="colAnimalNumber" text="Dyr Nr." prefWidth="100" />
+                        <TableColumn fx:id="colResponder" text="Responder ID" prefWidth="120" />
+                        <TableColumn fx:id="colLocation" text="Lokation" prefWidth="80" />
+                        <TableColumn fx:id="colBirthDate" text="Fødselsdato" prefWidth="100" />
+                        <TableColumn fx:id="colWeight" text="Vægt (kg)" prefWidth="90" />
+                        <TableColumn fx:id="colFCR" text="FCR" prefWidth="70" />
+                    </columns>
+                </TableView>
+
+                <HBox alignment="TOP_LEFT">
+                    <Button text="+ Registrer Ny Gris" onAction="#handleOpenRegistration" styleClass="action-button"/>
+                </HBox>
             </VBox>
-            
-            <TableView fx:id="pigTable" HBox.hgrow="ALWAYS" styleClass="modern-table">
-                <columns>
-                    <TableColumn fx:id="colAnimalNumber" text="Dyr Nr." prefWidth="120" />
-                    <TableColumn fx:id="colResponder" text="Responder ID" prefWidth="150" />
-                    <TableColumn fx:id="colLocation" text="Lokation" prefWidth="100" />
-                    <TableColumn fx:id="colBirthDate" text="Fødselsdato" prefWidth="120" />
-                    <TableColumn fx:id="colWeight" text="Vægt (kg)" prefWidth="100" />
-                    <TableColumn fx:id="colFCR" text="FCR" prefWidth="80" />
-                </columns>
-            </TableView>
+
+            <VBox fx:id="sideContent" prefWidth="450.0" minWidth="400.0" styleClass="sidebar-container" spacing="15" HBox.hgrow="NEVER">
+
+                <VBox spacing="5" VBox.vgrow="ALWAYS">
+                    <Label text="Besætningens FCR Trend (Live)" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                    <StackPane fx:id="chartContainer" VBox.vgrow="ALWAYS" minHeight="200.0" />
+                </VBox>
+
+                <VBox spacing="5" VBox.vgrow="ALWAYS">
+                    <Label text="Vægtudvikling - Gris (Live)" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                    <StackPane fx:id="weightChartContainer" VBox.vgrow="ALWAYS" minHeight="200.0" />
+                </VBox>
+
+                <VBox spacing="5">
+                    <Label text="Aktuel Staldstatus" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                    <StackPane fx:id="gaugeContainer2" alignment="CENTER" minHeight="150.0" />
+                </VBox>
+            </VBox>
+
         </HBox>
     </children>
 </VBox>
