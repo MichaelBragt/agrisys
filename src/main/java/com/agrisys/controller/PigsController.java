@@ -1,61 +1,88 @@
 package com.agrisys.controller;
 
-import com.agrisys.Utils.Gauge;
-import com.agrisys.Utils.UIErrorReport;
+import com.agrisys.model.PigSummary;
+import com.agrisys.service.PigService;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
 import java.io.IOException;
+import java.time.LocalDate;
 
 /**
- * Controller for the Pig Management view.
- * Handles biological data tracking, RFID tag assignments, and health records.
+ * Controller for the Pigs Management view.
+ * Follows MVC pattern by delegating logic to PigService.
  */
 public class PigsController {
 
-    public StackPane gaugeContainer2;
+    @FXML private TableView<PigSummary> pigTable;
+    @FXML private TableColumn<PigSummary, String> colAnimalNumber;
+    @FXML private TableColumn<PigSummary, String> colResponder;
+    @FXML private TableColumn<PigSummary, Integer> colLocation;
+    @FXML private TableColumn<PigSummary, LocalDate> colBirthDate;
+    @FXML private TableColumn<PigSummary, Double> colWeight;
+    @FXML private TableColumn<PigSummary, Double> colFCR;
 
-    /**
-     * Initializes the controller. 
-     * This is where we will eventually bind the TableView for pig records
-     * and set up the search logic for RFID tags.
-     */
-    @FXML
-    public void initialize() {
-        // Implementation for PS-02 (Business Logic Layer) integration goes here
-        Gauge gauge = new Gauge(50);
-        gauge.updateStatus(47);
-        gaugeContainer2.getChildren().add(gauge);
+    private final PigService pigService;
+    private final ObservableList<PigSummary> masterData = FXCollections.observableArrayList();
+
+    public PigsController() {
+        this.pigService = new PigService();
     }
 
-    /**
-     * Opens the modal dialog for registering a new pig.
-     * This method fulfills the requirement of modularity by decoupling the main view
-     * logic from the specific registration workflow.
-     */
+    @FXML
+    public void initialize() {
+        setupTable();
+        loadData();
+    }
+
+    private void setupTable() {
+        // Using Type-Safe Lambda factories compatible with Java Records
+        colAnimalNumber.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().animalNumber()));
+        colResponder.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().responderId()));
+        colLocation.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().locationId()));
+        colBirthDate.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().birthDate()));
+        colWeight.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().weight()));
+        colFCR.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().fcr()));
+        
+        pigTable.setItems(masterData);
+    }
+
+    private void loadData() {
+        // Offload to background thread if the dataset grows significantly
+        masterData.setAll(pigService.getActivePigDashboardData());
+    }
+
     @FXML
     private void handleOpenRegistration() {
         try {
-            // Architectural Note: We use a specific loader to instantiate the dialog view.
+            // Load the FXML for the registration dialog
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/agrisys/pig-registration-dialog.fxml"));
             Parent root = loader.load();
 
+            // Create and configure a new Stage (Window)
             Stage stage = new Stage();
             stage.setTitle("Registrer Ny Gris");
-            
-            // Modality ensures the user focuses on the task at hand (Data Entry).
-            stage.initModality(Modality.WINDOW_MODAL);
-            stage.initOwner(gaugeContainer2.getScene().getWindow());
-            
+            stage.initModality(Modality.APPLICATION_MODAL); // Block interaction with main window
+            stage.initOwner(pigTable.getScene().getWindow()); // Set parent window for centering
             stage.setScene(new Scene(root));
+
+            // Show and wait blocks execution here until the window is closed
             stage.showAndWait();
+
+            // Refresh the table data to show the new pig if it was saved
+            loadData();
         } catch (IOException e) {
-            UIErrorReport.showDatabaseError(e);
+            // Log the error - in production, this should trigger an Alert to the user
+            e.printStackTrace();
         }
     }
 }

@@ -2,6 +2,7 @@ package com.agrisys.dao;
 
 import com.agrisys.DbConnect;
 import com.agrisys.model.PigRecord;
+import com.agrisys.model.PigSummary;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,5 +84,51 @@ public class PigDAO {
             birth != null ? birth.toLocalDate() : null,
             rs.getString("status")
         );
+    }
+
+    /**
+     * Fetches aggregated summary data for all active pigs.
+     * Uses an OUTER APPLY for efficient "latest weight" retrieval in MSSQL.
+     * 
+     * @return List of PigSummary objects.
+     * @throws SQLException On database communication failure.
+     */
+    public List<PigSummary> getPigSummaries() throws SQLException {
+        List<PigSummary> summaries = new ArrayList<>();
+        String sql = """
+            SELECT 
+                p.animal_number, 
+                ra.responder_id, 
+                pl.location_id, 
+                p.birth_date,
+                latest_weight.pig_weight
+            FROM Pig p
+            LEFT JOIN Responder_Assignment ra ON p.animal_number = ra.animal_number AND ra.date_removed IS NULL
+            LEFT JOIN Pig_Location pl ON p.animal_number = pl.animal_number AND pl.departed_at IS NULL
+            OUTER APPLY (
+                SELECT TOP 1 pd.pig_weight 
+                FROM PPT_Data pd 
+                WHERE pd.assignment_id = ra.assignment_id 
+                ORDER BY pd.visit_time DESC
+            ) AS latest_weight
+            WHERE p.status = 'Aktiv'
+            """;
+
+        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                Date birth = rs.getDate("birth_date");
+                summaries.add(new PigSummary(
+                    rs.getString("animal_number"),
+                    rs.getString("responder_id"),
+                    rs.getObject("location_id") != null ? rs.getInt("location_id") : null,
+                    birth != null ? birth.toLocalDate() : null,
+                    rs.getDouble("pig_weight"),
+                    null // FCR to be implemented in Logic Layer
+                ));
+            }
+        }
+        return summaries;
     }
 }
