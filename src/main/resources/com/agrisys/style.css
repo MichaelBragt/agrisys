@@ -1,6 +1,6 @@
-/* 
- * Agrisys Global Stylesheet 
- * Following the principle of "Separation of Concerns" (Pressman), 
+/*
+ * Agrisys Global Stylesheet
+ * Following the principle of "Separation of Concerns" (Pressman),
  * all visual styling is decoupled from FXML structure.
  */
 
@@ -12,9 +12,30 @@
     -agri-text-dark: #2c3e50;     /* Navy Charcoal */
     -agri-text-light: #ffffff;
     -agri-border-color: #d1dce5;
-    
+
     -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
     -fx-font-size: 14px;
+}
+
+/* Top Bar */
+.top-bar {
+    -fx-background-color: -agri-secondary;
+    -fx-border-color: -agri-border-color;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8 16 8 16;
+}
+
+.logout-button {
+    -fx-background-color: -agri-primary;
+    -fx-text-fill: -agri-text-light;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4px;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+}
+
+.logout-button:hover {
+    -fx-background-color: #123a54;
 }
 
 /* TabPane Customization */
