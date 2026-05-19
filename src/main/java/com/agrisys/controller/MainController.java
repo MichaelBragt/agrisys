@@ -35,14 +35,17 @@ public class MainController {
     private void addLogoutButton() {
         Button logoutButton = new Button("Log ud");
         logoutButton.getStyleClass().add("logout-button");
-        logoutButton.setOnAction(event -> handleLogout());
+        logoutButton.setOnAction(event -> {
+            event.consume();
+            handleLogout();
+        });
 
         HBox topBar = new HBox(logoutButton);
         topBar.getStyleClass().add("top-bar");
         topBar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
 
         VBox mainLayout = (VBox) mainTabPane.getParent();
-        mainLayout.getChildren().add(0, topBar);
+        mainLayout.getChildren().addFirst(topBar);
     }
 
     private void handleLogout() {
