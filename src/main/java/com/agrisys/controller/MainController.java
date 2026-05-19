@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
@@ -54,8 +55,12 @@ public class MainController {
         confirmLogout.setHeaderText("Vil du logge ud?");
         confirmLogout.setContentText("Programmet lukkes, hvis du fortsætter.");
 
+        ButtonType logoutButton = new ButtonType("Log ud", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Annuller", ButtonBar.ButtonData.CANCEL_CLOSE);
+        confirmLogout.getButtonTypes().setAll(logoutButton, cancelButton);
+
         Optional<ButtonType> result = confirmLogout.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
+        if (result.isPresent() && result.get() == logoutButton) {
             Platform.exit();
         }
     }
