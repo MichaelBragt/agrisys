@@ -20,6 +20,14 @@ public class ChartService {
 
         // SQL der tager dagens samlede foder (i gram) og holder det op mod
         // grisenes forventede daglige tilvækst (1000g pr. gris om dagen).
+        // CONVERT (style 120) corresponds to ODBC yyy-mm-dd hh:mi:ss
+        // by converting to varchar(10) we strip of the time portion
+        // effectively leaving us with only the dates
+        // The calculation total feed at specific day / unique number of animals * 1000
+        // gives us an estimated FCR based on healthy pigs under normal conditions should
+        // grow by 1000 grams per day.
+        // if we want to get a calculated FCR we should use SQL Windows functions
+        // we also filter out the most recent day in the result because that might be a day not finished
         String sql = """
             SELECT 
                 CONVERT(VARCHAR(10), d.visit_time, 120) AS Dato,
@@ -27,12 +35,16 @@ public class ChartService {
                 CAST(SUM(d.feed_intake) / (COUNT(DISTINCT ra.animal_number) * 1000.0) AS DOUBLE PRECISION) AS BeregnetFCR
             FROM PPT_Data d
             JOIN Responder_Assignment ra ON d.assignment_id = ra.assignment_id
+            -- Dynamic filter: Exclude the latest calendar day found in the dataset
+            WHERE CONVERT(VARCHAR(10), d.visit_time, 120) < (
+                SELECT MAX(CONVERT(VARCHAR(10), visit_time, 120)) FROM PPT_Data
+            )
             GROUP BY CONVERT(VARCHAR(10), d.visit_time, 120)
             ORDER BY Dato ASC
         """;
 
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
@@ -43,9 +55,12 @@ public class ChartService {
                 fcr = Math.round(fcr * 100.0) / 100.0;
 
                 // Vi filtrerer den sidste dag fra, hvis den kun indeholder halve data (f.eks. pga. eksport-tidspunkt)
-                if (fcr > 1.0 && fcr < 6.0) {
+                // nope den filtrere bare fcr værdier under 1 og over 6 fra..
+                // to be deleted later, skal bare add'e punkterne
+                // sidste dato er filtreret i sql'en :-)
+//                if (fcr > 1.0 && fcr < 6.0) {
                     punkter.add(new ChartPoint(dato, fcr));
-                }
+//                }
             }
         }
 
@@ -69,8 +84,8 @@ public class ChartService {
         ORDER BY Dato ASC
     """;
 
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
