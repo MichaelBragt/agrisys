@@ -4,12 +4,10 @@ import com.agrisys.DbConnect;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.TabPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.Label;
+import javafx.scene.layout.GridPane;
 
 import java.util.Optional;
 
@@ -19,12 +17,8 @@ import java.util.Optional;
  */
 public class MainController {
 
-    @FXML
-    private TabPane mainTabPane;
-
     public void initialize() {
         // Initialization logic for the TabPane shell
-        addLogoutButton();
 
         // Just a line used for testing db connection
         // is to be removed
@@ -33,22 +27,25 @@ public class MainController {
         System.out.println("Before D");
     }
 
-    private void addLogoutButton() {
-        Button logoutButton = new Button("Log ud");
-        logoutButton.getStyleClass().add("logout-button");
-        logoutButton.setOnAction(event -> {
-            event.consume();
-            handleLogout();
-        });
+    @FXML
+    private void handleProfile() {
+        Alert profileDialog = new Alert(Alert.AlertType.INFORMATION);
+        profileDialog.setTitle("Profil");
+        profileDialog.setHeaderText("Brugerprofil");
 
-        HBox topBar = new HBox(logoutButton);
-        topBar.getStyleClass().add("top-bar");
-        topBar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        GridPane profileInfo = new GridPane();
+        profileInfo.setHgap(12);
+        profileInfo.setVgap(8);
+        profileInfo.addRow(0, new Label("Bruger:"), new Label("Ikke angivet"));
+        profileInfo.addRow(1, new Label("Gård:"), new Label("Ikke angivet"));
+        profileInfo.addRow(2, new Label("Rolle:"), new Label("Ikke angivet"));
 
-        VBox mainLayout = (VBox) mainTabPane.getParent();
-        mainLayout.getChildren().addFirst(topBar);
+        profileDialog.getDialogPane().setContent(profileInfo);
+        profileDialog.getButtonTypes().setAll(new ButtonType("Luk", ButtonBar.ButtonData.OK_DONE));
+        profileDialog.showAndWait();
     }
 
+    @FXML
     private void handleLogout() {
         Alert confirmLogout = new Alert(Alert.AlertType.CONFIRMATION);
         confirmLogout.setTitle("Log ud");
