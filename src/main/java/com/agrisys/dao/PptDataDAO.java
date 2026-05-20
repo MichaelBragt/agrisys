@@ -79,18 +79,38 @@ public class PptDataDAO {
      * @param assignmentId The assignment to look up.
      * @return List of ChartPoints (Time vs Weight).
      */
+    /**
+     * Fetches weight history for a specific assignment.
+     * Used for individual pig charts. Sells out 0-weight noise and converts grams to kg.
+     *
+     * @param assignmentId The assignment to look up.
+     * @return List of ChartPoints (Time vs Weight in kg).
+     */
     public List<ChartPoint> getWeightHistory(int assignmentId) throws SQLException {
         List<ChartPoint> points = new ArrayList<>();
-        String sql = "SELECT visit_time, pig_weight FROM PPT_Data WHERE assignment_id = ? ORDER BY visit_time ASC";
-        
+
+        // RETTET: Tilføjet "AND pig_weight > 0" for at fjerne rutsjebane-støj
+        String sql = """
+            SELECT visit_time, pig_weight 
+            FROM PPT_Data 
+            WHERE assignment_id = ? AND pig_weight > 0 
+            ORDER BY visit_time ASC
+        """;
+
         Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, assignmentId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
+                    // RETTET: Dividerer med 1000.0 for at konvertere rå gram til kg på grafen
+                    double weightInKg = rs.getDouble("pig_weight") / 1000.0;
+
+                    // Afrund til 2 decimaler, så tooltippen står skarpt
+                    weightInKg = Math.round(weightInKg * 100.0) / 100.0;
+
                     points.add(new ChartPoint(
-                        rs.getTimestamp("visit_time").toLocalDateTime().toLocalDate().toString(),
-                        rs.getDouble("pig_weight")
+                            rs.getTimestamp("visit_time").toLocalDateTime().toLocalDate().toString(),
+                            weightInKg
                     ));
                 }
             }

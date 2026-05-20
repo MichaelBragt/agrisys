@@ -74,7 +74,7 @@ public class PigDetailController {
                 ChartSeriesData series = service.getPigWeightHistory(dto.animalNumber(), dto.assignmentId());
                 chartContainer.getChildren().clear();
                 chartContainer.getChildren().add(AgrisysChartBuilder.buildLineChart(
-                    "", "Dato", "Vægt (kg)", "Vægt", List.of(series)
+                    "", "Dato", "Vægt (kg)", "Vægt (kg)", List.of(series)
                 ));
             } catch (SQLException e) {
                 System.err.println("Could not load chart data: " + e.getMessage());

@@ -18,9 +18,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -153,7 +151,7 @@ public class PigsController {
 
     private void indlaesBestandGraf(Integer locationId) throws SQLException {
         try {
-        ChartSeriesData fcrData = chartService.hentFcrTrend(locationId); // Pass locationId
+        ChartSeriesData fcrData = chartService.getFcrTrend(locationId); // Pass locationId
 
             if (fcrData != null && !fcrData.points().isEmpty()) {
                 LineChart<String, Number> fcrChart = AgrisysChartBuilder.buildLineChart(
@@ -177,7 +175,7 @@ public class PigsController {
      */
     private void visStatusGauge(Integer locationId) throws SQLException {
         try {
-            var fcrTrend = chartService.hentFcrTrend(locationId); // Pass locationId
+            var fcrTrend = chartService.getFcrTrend(locationId); // Pass locationId
 
             gaugeContainer2.getChildren().clear();
             Gauge statusGauge = new Gauge(50); // Radius 80 som passer i jeres sidebar
@@ -251,7 +249,7 @@ public class PigsController {
      */
     private void indlaesVaegtGraf(Integer locationId) throws SQLException {
         try {
-            ChartSeriesData vaegtData = chartService.hentGennemsnitVaegt(locationId); // Pass locationId
+            ChartSeriesData vaegtData = chartService.getAverageWeight(locationId); // Pass locationId
 
             if (vaegtData != null && !vaegtData.points().isEmpty()) {
                 LineChart<String, Number> weightChart = AgrisysChartBuilder.buildLineChart(
