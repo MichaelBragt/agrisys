@@ -9,13 +9,18 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Orchestrator for the main application shell.
  * Handles top-level navigation and global application state.
  */
 public class MainController {
+    private static final Logger LOGGER = Logger.getLogger(MainController.class.getName());
 
     public void initialize() {
         // Initialization logic for the TabPane shell
@@ -33,7 +38,7 @@ public class MainController {
             Dialog<ButtonType> profileDialog = loadDialog("profile-dialog.fxml");
             profileDialog.showAndWait();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Kunne ikke indlæse profildialog.", e);
         }
     }
 
@@ -46,12 +51,12 @@ public class MainController {
                 Platform.exit();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Kunne ikke indlæse log ud-dialog.", e);
         }
     }
 
-    @SuppressWarnings("unchecked")
     private Dialog<ButtonType> loadDialog(String fileName) throws IOException {
-        return FXMLLoader.load(getClass().getResource("/com/agrisys/" + fileName));
+        URL dialogResource = Objects.requireNonNull(getClass().getResource("/com/agrisys/" + fileName));
+        return FXMLLoader.load(dialogResource);
     }
 }
