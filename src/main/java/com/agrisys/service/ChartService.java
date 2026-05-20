@@ -15,15 +15,15 @@ public class ChartService {
     /**
      * Henter den overordnede FCR trend dag for dag for hele besætningen.
      */
-    public ChartSeriesData hentFcrTrendForBestand() throws SQLException {
-        return hentFcrTrend(null);
+    public ChartSeriesData getFcrTrendForPopulation() throws SQLException {
+        return getFcrTrend(null);
     }
 
     /**
      * Henter FCR trend for en specifik lokation eller hele besætningen.
      * @param locationId Hvis null, hentes data for hele besætningen.
      */
-    public ChartSeriesData hentFcrTrend(Integer locationId) throws SQLException {
+    public ChartSeriesData getFcrTrend(Integer locationId) throws SQLException {
         List<ChartPoint> punkter = new ArrayList<>();
 
         String locationFilter = (locationId == null) ? "" : 
@@ -83,13 +83,13 @@ public class ChartService {
      * Henter den gennemsnitlige vægtudvikling (i kg) dag for dag for hele besætningen.
      */
     public ChartSeriesData hentGennemsnitVaegtForBestand() throws SQLException {
-        return hentGennemsnitVaegt(null);
+        return getAverageWeight(null);
     }
 
     /**
      * Henter gennemsnitsvægt for en specifik lokation eller hele besætningen.
      */
-    public ChartSeriesData hentGennemsnitVaegt(Integer locationId) throws SQLException {
+    public ChartSeriesData getAverageWeight(Integer locationId) throws SQLException {
         List<ChartPoint> punkter = new ArrayList<>();
 
         String joinClause = (locationId == null) ? "" : 
@@ -102,7 +102,7 @@ public class ChartService {
         SELECT 
             CONVERT(VARCHAR(10), d.visit_time, 120) AS Dato,
             -- Vi tager gennemsnitsvægten for dagen og laver gram om til kg
-            CAST(AVG(d.pig_weight / 1000.0) AS DOUBLE PRECISION) AS GnsVaegtKG
+            CAST(AVG(d.pig_weight / 1000.0) AS DOUBLE PRECISION) AS GrisVaegtKG
         FROM PPT_Data d
         """ + joinClause + whereClause + """
         GROUP BY CONVERT(VARCHAR(10), d.visit_time, 120)
@@ -115,7 +115,7 @@ public class ChartService {
 
             while (rs.next()) {
                 String dato = rs.getString("Dato");
-                double vaegt = rs.getDouble("GnsVaegtKG");
+                double vaegt = rs.getDouble("GrisVaegtKG");
 
                 // Afrund til 1 decimal (f.eks. 95.5 kg)
                 vaegt = Math.round(vaegt * 10.0) / 10.0;

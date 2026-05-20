@@ -6,6 +6,8 @@ import com.agrisys.dto.ExcelImportDTO;
 import com.agrisys.model.LocationRecord;
 import com.agrisys.model.PptDataRecord;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Logger;
@@ -18,6 +20,8 @@ import java.util.logging.Logger;
  */
 public class ExcelDataToDatabaseService {
     private static final Logger LOGGER = Logger.getLogger(ExcelDataToDatabaseService.class.getName());
+
+    public record ImportResult(int insertedCount, int skippedCount) {}
 
     private final PigDAO pigDAO = new PigDAO();
     private final RespondersDAO respondersDAO = new RespondersDAO();
@@ -33,8 +37,10 @@ public class ExcelDataToDatabaseService {
      * @param importData The list of parsed Excel rows.
      * @throws SQLException if a database error occurs.
      */
-    public void processImport(List<ExcelImportDTO> importData) throws SQLException {
+    public ImportResult processImport(List<ExcelImportDTO> importData) throws SQLException {
         Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        int skippedRows = 0;
+        int insertedRows = 0;
         
         try {
             conn.setAutoCommit(false); // Begin Transaction
@@ -52,6 +58,10 @@ public class ExcelDataToDatabaseService {
                 // 3. Handle Pig Location tracking
                 ensurePigLocation(conn, dto.animalNumber(), locId, dto.visitTime());
 
+                if (importAlreadyExists(conn, assignmentId, dto.visitTime())) {
+                    skippedRows++;
+                    continue;
+                }
                 // 4. Prepare and Save Measurement (PPT_Data)
                 // For high volume, we could batch these, but here we show the logic for the assignment link.
                 PptDataRecord measurement = new PptDataRecord(
@@ -64,10 +74,12 @@ public class ExcelDataToDatabaseService {
                 );
                 
                 pptDataDAO.saveSingle(conn, measurement);
+                insertedRows++;
             }
 
             conn.commit();
             LOGGER.info("Import successful. Committed " + importData.size() + " rows.");
+            return new ImportResult(insertedRows, skippedRows);
         } catch (SQLException e) {
             conn.rollback();
             LOGGER.severe("Import failed. Transaction rolled back: " + e.getMessage());
@@ -91,6 +103,21 @@ public class ExcelDataToDatabaseService {
                     }
                 });
     }
+
+    /**
+     * Hjælpemetode der tjekker om kombinationen af responder-linket og tidspunktet findes i forvejen.
+     */
+    private boolean importAlreadyExists(Connection conn, int assignmentId, java.time.LocalDateTime visitTime) throws SQLException {
+        String sql = "SELECT 1 FROM PPT_Data WHERE assignment_id = ? AND visit_time = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, assignmentId);
+            pstmt.setTimestamp(2, java.sql.Timestamp.valueOf(visitTime));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next(); // Returnerer true hvis målingen findes, ellers false
+            }
+        }
+    }
+
 
     private int resolveAssignmentId(Connection conn, String animal, String responder, java.time.LocalDateTime time) throws SQLException {
         // Check if an active assignment already exists for this responder
@@ -118,4 +145,5 @@ public class ExcelDataToDatabaseService {
             pigLocationDAO.create(conn, new com.agrisys.model.PigLocationRecord(null, animal, locId, time, null));
         }
     }
+
 }

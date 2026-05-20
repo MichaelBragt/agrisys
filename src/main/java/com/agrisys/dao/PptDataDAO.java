@@ -79,19 +79,142 @@ public class PptDataDAO {
      * @param assignmentId The assignment to look up.
      * @return List of ChartPoints (Time vs Weight).
      */
+    /**
+     * Fetches weight history for a specific assignment.
+     * Used for individual pig charts. Sells out 0-weight noise and converts grams to kg.
+     *
+     * @param assignmentId The assignment to look up.
+     * @return List of ChartPoints (Time vs Weight in kg).
+     */
+    /**
+     * Fetches the maximum recorded weight history per day for a specific assignment.
+     * Groups all visits within the same date to a single point and converts grams to kg.
+     *
+     * @param assignmentId The assignment to look up.
+     * @return List of ChartPoints (One point per Day vs Weight in kg).
+     */
     public List<ChartPoint> getWeightHistory(int assignmentId) throws SQLException {
         List<ChartPoint> points = new ArrayList<>();
-        String sql = "SELECT visit_time, pig_weight FROM PPT_Data WHERE assignment_id = ? ORDER BY visit_time ASC";
-        
+
+        // Vi konverterer visit_time til en ren dato (YYYY-MM-DD)
+        // og tager MAX(pig_weight) for at få dagens slutvægt
+        String sql = """
+            SELECT 
+                CONVERT(VARCHAR(10), visit_time, 120) AS Dato,
+                MAX(pig_weight) AS DagsVaegt
+            FROM PPT_Data
+            WHERE assignment_id = ? AND pig_weight > 0
+            GROUP BY CONVERT(VARCHAR(10), visit_time, 120)
+            ORDER BY Dato ASC
+        """;
+
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, assignmentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    // Konverter rå gram fra databasen til kg
+                    double weightInKg = rs.getDouble("DagsVaegt") / 1000.0;
+
+                    // Afrund til 2 decimaler for flot UI-visning
+                    weightInKg = Math.round(weightInKg * 100.0) / 100.0;
+
+                    points.add(new ChartPoint(
+                            rs.getString("Dato"),
+                            weightInKg
+                    ));
+                }
+            }
+        }
+        return points;
+    }
+
+    /**
+     * Henter det SAMLEDE foderindtag (i gram) per dag for den enkelte gris.
+     * Grupperer alle besøg på samme dato til ét enkelt punkt.
+     */
+    public List<ChartPoint> getFeedHistory(int assignmentId) throws SQLException {
+        List<ChartPoint> points = new ArrayList<>();
+
+        // Vi konverterer visit_time til en ren dato (YYYY-MM-DD) og summerer foderet
+        String sql = """
+            SELECT 
+                CONVERT(VARCHAR(10), visit_time, 120) AS Dato,
+                SUM(feed_intake) AS DagligtFoder
+            FROM PPT_Data
+            WHERE assignment_id = ? AND feed_intake > 0
+            GROUP BY CONVERT(VARCHAR(10), visit_time, 120)
+            ORDER BY Dato ASC
+        """;
+
         Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, assignmentId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     points.add(new ChartPoint(
-                        rs.getTimestamp("visit_time").toLocalDateTime().toLocalDate().toString(),
-                        rs.getDouble("pig_weight")
+                            rs.getString("Dato"),
+                            rs.getDouble("DagligtFoder")
                     ));
+                }
+            }
+        }
+        return points;
+    }
+
+    /**
+     * Henter den akkumulerede FCR-ratio dag for dag for den enkelte gris.
+     * Finder den seneste vægt på dagen og dividerer med det samlede foder indtil den dag.
+     */
+    public List<ChartPoint> getIndividualFcrHistory(int assignmentId) throws SQLException {
+        List<ChartPoint> points = new ArrayList<>();
+
+        // Denne query finder først den seneste vægt for hver dag og det akkumulerede foder.
+        // Derefter beregnes FCR som en ren dag-for-dag udvikling.
+        String sql = """
+            WITH DagligeMaalinger AS (
+                SELECT 
+                    CONVERT(VARCHAR(10), visit_time, 120) AS Dato,
+                    -- Hent den sidste vægt registreret på den specifikke dag
+                    MAX(pig_weight) OVER (PARTITION BY CONVERT(VARCHAR(10), visit_time, 120)) AS dagens_vaegt,
+                    -- Akkumuleret foder indtil denne dag
+                    SUM(feed_intake) OVER (ORDER BY visit_time ASC) AS acc_feed,
+                    -- Grisens absolutte startvægt
+                    FIRST_VALUE(pig_weight) OVER (ORDER BY visit_time ASC) AS start_weight
+                FROM PPT_Data
+                WHERE assignment_id = ? AND pig_weight > 0
+            ),
+            DagsOpsamling AS (
+                SELECT 
+                    Dato,
+                    MAX(dagens_vaegt) AS Vaegt,
+                    MAX(acc_feed) AS AccFoder,
+                    MAX(start_weight) AS StartVaegt
+                FROM DagligeMaalinger
+                GROUP BY Dato
+            )
+            SELECT 
+                Dato,
+                AccFoder / NULLIF(Vaegt - StartVaegt, 0) AS FcrRatio
+            FROM DagsOpsamling
+            WHERE Vaegt - StartVaegt > 1000 -- Kræver over 1 kg tilvækst
+            ORDER BY Dato ASC
+        """;
+
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, assignmentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    double fcr = rs.getDouble("FcrRatio");
+                    fcr = Math.round(fcr * 100.0) / 100.0; // Afrund til 2 decimaler
+
+                    if (fcr >= 1.0 && fcr <= 5.0) {
+                        points.add(new ChartPoint(
+                                rs.getString("Dato"),
+                                fcr
+                        ));
+                    }
                 }
             }
         }

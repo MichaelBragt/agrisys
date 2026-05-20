@@ -42,7 +42,7 @@ public class HomeController {
     private void opdaterDashboardGraf() {
         try {
             // 1. Hent data-serien via jeres SQL-query
-            ChartSeriesData fcrData = chartService.hentFcrTrendForBestand();
+            ChartSeriesData fcrData = chartService.getFcrTrendForPopulation();
 
             // 2. SIKRING: Hvis databasen er tom, viser vi vores nye FCR-gauge som fallback med det samme
             if (fcrData == null || fcrData.points().isEmpty()) {
@@ -100,7 +100,9 @@ public class HomeController {
         if (selectedFile != null) {
             try {
                 List<ExcelImportDTO> rawData = parserService.parseExcel(selectedFile);
-                excelDataToDatabaseService.processImport(rawData);
+                ExcelDataToDatabaseService.ImportResult resultat = excelDataToDatabaseService.processImport(rawData);
+
+                System.out.println("Successfully processed file. Inserted: " + resultat.insertedCount() + ", Skipped: " + resultat.skippedCount());
 
                 System.out.println("Successfully parsed " + rawData.size() + " rows.");
 
@@ -108,10 +110,16 @@ public class HomeController {
                 // så landmanden kan se de 2.242 nye punkter på skærmen med det samme!
                 opdaterDashboardGraf();
 
+                String msgText = String.format(
+                        "%d nye målinger blev synkroniseret.\n%d målinger blev udeladt, da de allerede eksisterede i databasen.",
+                        resultat.insertedCount(),
+                        resultat.skippedCount()
+                );
+
                 UIErrorReport.showAlert(
                         "Import færdig",
                         "Data er indlæst i databasen",
-                        rawData.size() + " rækker blev synkroniseret."
+                        msgText
                 );
 
             } catch (Exception e) {
