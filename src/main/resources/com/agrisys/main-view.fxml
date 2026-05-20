@@ -19,11 +19,6 @@
                 <fx:include source="pigs-view.fxml" />
             </content>
           </Tab>
-          <Tab text="Bokse">
-            <content>
-                <fx:include source="location-view.fxml" />
-            </content>
-          </Tab>
             <Tab text="Handlinger">
                 <content>
                     <fx:include source="handlinger-view.fxml" />

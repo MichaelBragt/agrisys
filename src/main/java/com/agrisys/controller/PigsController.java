@@ -4,8 +4,10 @@ import com.agrisys.Utils.AgrisysChartBuilder;
 import com.agrisys.Utils.Gauge; // Sørg for at importere jeres Gauge klasse
 import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.dto.ChartSeriesData;
+import com.agrisys.model.Location;
 import com.agrisys.model.PigSummary;
 import com.agrisys.service.ChartService;
+import com.agrisys.service.LocationService;
 import com.agrisys.service.PigService;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -16,14 +18,19 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PigsController {
@@ -37,19 +44,22 @@ public class PigsController {
     @FXML private TableColumn<PigSummary, Double> colWeight;
     @FXML private TableColumn<PigSummary, Double> colFCR;
 
+    @FXML private ComboBox<Location> locationSelector; // New FXML element for location dropdown
+
     // De to containere i højre side
     @FXML private StackPane chartContainer;
     @FXML private StackPane gaugeContainer2;
     @FXML private StackPane weightChartContainer;
 
-
     private final PigService pigService;
     private final ChartService chartService;
+    private final LocationService locationService; // New service for locations
     private final ObservableList<PigSummary> pigSummaries = FXCollections.observableArrayList();
 
     public PigsController() {
         this.pigService = new PigService();
         this.chartService = new ChartService();
+        this.locationService = new LocationService(); // Initialize LocationService
     }
 
     @FXML
@@ -57,15 +67,21 @@ public class PigsController {
         // initialize is a javafx special function that it called once
         // when the view is loaded, here we setup the table and load the data
         setupTable();
-        loadData();
-
-        // We push the rendering of the graphs to the end of the java thread
-        // to make sure the table gets rendered first
-        Platform.runLater(() -> {
-            indlaesBestandGraf();
-            indlaesVaegtGraf();
-            visStatusGauge();
+        loadLocations(); // Load locations into the ComboBox
+        
+        // Add listener for location selection changes
+        locationSelector.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            // If newVal is null (e.g., ComboBox cleared), treat as "All Locations" (null ID)
+            refreshPigData(newVal != null ? newVal.id() : null);
         });
+
+        // Default selection: "Alle Lokationer" (our special ID 0)
+        if (!locationSelector.getItems().isEmpty()) {
+            locationSelector.getSelectionModel().selectFirst();
+        } else {
+            // Fallback if no locations are found, still load all pig data
+            refreshPigData(null);
+        }
     }
 
     /**
@@ -101,21 +117,47 @@ public class PigsController {
     }
 
     /**
-     * Loads the pig data from pigSummaries List into the table.
-     * called in initialize and everywhere else when we want the table to update
+     * Loads all available locations into the ComboBox, including an "All Locations" option.
      */
-    private void loadData() {
-        pigSummaries.setAll(pigService.getActivePigDashboardData());
+    private void loadLocations() {
+        List<Location> locs = new ArrayList<>();
+        // Add a special "All Locations" option with ID 0
+        locs.add(new Location(0, "Alle Lokationer"));
+        locs.addAll(locationService.getAllLocations()); // Fetch actual locations
+        locationSelector.setItems(FXCollections.observableArrayList(locs));
     }
 
-    private void indlaesBestandGraf() {
+    /**
+     * Refreshes the pig table, charts, and gauge based on the selected location.
+     * @param selectedLocationId The ID of the selected location, or null for all pigs.
+     */
+    private void refreshPigData(Integer selectedLocationId) {
+        // Map our special ID 0 ("Alle Lokationer") to null for service calls
+        Integer actualLocationId = (selectedLocationId != null && selectedLocationId == 0) ? null : selectedLocationId;
+
+        // Update table data
+        pigSummaries.setAll(pigService.getPigDashboardData(actualLocationId));
+
+        // Update charts and gauge asynchronously to keep UI responsive
+        Platform.runLater(() -> {
+            try {
+                indlaesBestandGraf(actualLocationId);
+                indlaesVaegtGraf(actualLocationId);
+                visStatusGauge(actualLocationId);
+            } catch (SQLException e) {
+                System.err.println("Fejl ved opdatering af grafer for lokation " + actualLocationId + ": " + e.getMessage());
+                UIErrorReport.showDatabaseError(e);
+            }
+        });
+    }
+
+    private void indlaesBestandGraf(Integer locationId) throws SQLException {
         try {
-            ChartSeriesData fcrData = chartService.hentFcrTrendForBestand();
+        ChartSeriesData fcrData = chartService.hentFcrTrend(locationId); // Pass locationId
 
             if (fcrData != null && !fcrData.points().isEmpty()) {
-                // Tilføj "FCR" som den 4. parameter
                 LineChart<String, Number> fcrChart = AgrisysChartBuilder.buildLineChart(
-                        "",
+                        (locationId == null || locationId == 0) ? "Besætningens FCR Trend (Live)" : "Lokation " + locationId + " FCR Trend",
                         "Dato",
                         "FCR Værdi",
                         "FCR", // <--- Den nye parameter
@@ -126,20 +168,19 @@ public class PigsController {
                 chartContainer.getChildren().add(fcrChart);
             }
         } catch (Exception e) {
-            System.err.println("Kunne ikke indlæse bestand-graf i Grise-tab: " + e.getMessage());
+            throw new SQLException("Kunne ikke indlæse bestand-graf i Grise-tab: " + e.getMessage(), e);
         }
     }
 
     /**
      * Tegner måleren i bunden af højre side
      */
-    private void visStatusGauge() {
+    private void visStatusGauge(Integer locationId) throws SQLException {
         try {
-            // Vi gjenbruker dataene fra trend-grafen og plukker ut det ALLER SISTE punktet (nyeste dato)
-            var fcrTrend = chartService.hentFcrTrendForBestand();
+            var fcrTrend = chartService.hentFcrTrend(locationId); // Pass locationId
 
             gaugeContainer2.getChildren().clear();
-            Gauge statusGauge = new Gauge(80); // Radius 80 som passer i jeres sidebar
+            Gauge statusGauge = new Gauge(50); // Radius 80 som passer i jeres sidebar
 
             if (fcrTrend != null && !fcrTrend.points().isEmpty()) {
                 // Hent det siste datapunktet i listen (nyeste dag i databasen)
@@ -155,7 +196,7 @@ public class PigsController {
             gaugeContainer2.getChildren().add(statusGauge);
 
         } catch (Exception e) {
-            System.err.println("Kunne ikke oppdatere live status gauge: " + e.getMessage());
+            throw new SQLException("Kunne ikke oppdatere live status gauge: " + e.getMessage(), e);
         }
     }
 
@@ -173,7 +214,10 @@ public class PigsController {
             stage.setScene(new Scene(root));
             stage.showAndWait();
             
-            loadData(); // Refresh table after possible edits
+            // Refresh table and charts after possible edits for the currently selected location
+            Location selectedLocation = locationSelector.getSelectionModel().getSelectedItem();
+            refreshPigData(selectedLocation != null ? selectedLocation.id() : null);
+
         } catch (IOException e) {
             UIErrorReport.showDatabaseError(e);
         }
@@ -193,30 +237,25 @@ public class PigsController {
 
             stage.showAndWait();
 
-            // Opdater alt data live efter lukning af dialogen
-            loadData();
-            indlaesBestandGraf();
-            visStatusGauge();
-            loadData();
-            indlaesBestandGraf();
-            indlaesVaegtGraf(); // OPDATER OGSÅ VÆGTGRAFEN LIVE
-            visStatusGauge();
+            // Opdater alt data live efter lukning af dialogen for den AKTUELLE valgte lokation
+            Location selectedLocation = locationSelector.getSelectionModel().getSelectedItem();
+            refreshPigData(selectedLocation != null ? selectedLocation.id() : null);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void indlaesVaegtGraf() {
+    /**
+     * Loads and displays the average weight trend graph for the selected location or all pigs.
+     */
+    private void indlaesVaegtGraf(Integer locationId) throws SQLException {
         try {
-            // 1. Hent dataene fra vores nye SQL query
-            ChartSeriesData vaegtData = chartService.hentGennemsnitVaegtForBestand();
+            ChartSeriesData vaegtData = chartService.hentGennemsnitVaegt(locationId); // Pass locationId
 
             if (vaegtData != null && !vaegtData.points().isEmpty()) {
-                // 2. Genbrug jeres geniale AgrisysChartBuilder!
-                // Tilføj "Vægt (kg)" som den 4. parameter
                 LineChart<String, Number> weightChart = AgrisysChartBuilder.buildLineChart(
-                        "",
+                        (locationId == null || locationId == 0) ? "Vægtudvikling - Gris (Live)" : "Lokation " + locationId + " Vægtudvikling",
                         "Dato",
                         "Vægt (kg)",
                         "Vægt (kg)", // <--- Den nye parameter
@@ -227,7 +266,7 @@ public class PigsController {
                 weightChartContainer.getChildren().add(weightChart);
             }
         } catch (Exception e) {
-            System.err.println("Kunne ikke indlæse vægt-graf i Grise-tab: " + e.getMessage());
+            throw new SQLException("Kunne ikke indlæse vægt-graf i Grise-tab: " + e.getMessage(), e);
         }
     }
 }
