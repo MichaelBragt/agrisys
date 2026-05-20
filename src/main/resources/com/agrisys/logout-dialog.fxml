@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+
+<Dialog title="Log ud" xmlns="http://javafx.com/javafx/21">
+   <dialogPane>
+      <DialogPane contentText="Programmet lukkes, hvis du fortsætter."
+                  headerText="Vil du logge ud?">
+         <ButtonType buttonData="OK_DONE" text="Log ud" />
+         <ButtonType buttonData="CANCEL_CLOSE" text="Annuller" />
+      </DialogPane>
+   </dialogPane>
+</Dialog>

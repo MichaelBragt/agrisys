@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<Dialog title="Profil" xmlns="http://javafx.com/javafx/21">
+   <dialogPane>
+      <DialogPane headerText="Brugerprofil" prefWidth="360.0" styleClass="profile-dialog" stylesheets="@style.css">
+         <content>
+            <VBox spacing="14.0">
+               <padding>
+                  <Insets bottom="6.0" left="2.0" right="2.0" top="4.0" />
+               </padding>
+               <GridPane hgap="18.0" vgap="10.0">
+                  <columnConstraints>
+                     <ColumnConstraints halignment="RIGHT" minWidth="76.0" />
+                     <ColumnConstraints hgrow="ALWAYS" minWidth="160.0" />
+                  </columnConstraints>
+                  <Label styleClass="profile-field-label" text="Bruger" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                  <Label styleClass="profile-field-value" text="Ikke angivet" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                  <Label styleClass="profile-field-label" text="Gård" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                  <Label styleClass="profile-field-value" text="Ikke angivet" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                  <Label styleClass="profile-field-label" text="Rolle" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                  <Label styleClass="profile-field-value" text="Ikke angivet" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+               </GridPane>
+            </VBox>
+         </content>
+         <ButtonType buttonData="OK_DONE" text="Luk" />
+      </DialogPane>
+   </dialogPane>
+</Dialog>
