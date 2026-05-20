@@ -1,7 +1,7 @@
 package com.agrisys.service;
 
 import com.agrisys.DbConnect;
-import com.agrisys.model.Location;
+import com.agrisys.model.LocationRecord;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,18 +21,18 @@ public class LocationService {
      * Retrieves all locations from the database, sorted by their ID in ascending order.
      * This method ensures that the UI (e.g., ComboBox) receives a consistent and ordered list.
      *
-     * @return A list of {@link Location} records. Returns an empty list if no locations are found
+     * @return A list of {@link LocationRecord} records. Returns an empty list if no locations are found
      *         or if a database error occurs.
      */
-    public List<Location> getAllLocations() {
-        List<Location> locations = new ArrayList<>();
+    public List<LocationRecord> getAllLocations() {
+        List<LocationRecord> locations = new ArrayList<>();
         String sql = "SELECT location_id, location_name FROM Location ORDER BY location_id ASC";
 
         Connection conn = DbConnect.UNIQUE_CONNECT.getConnection(); // Get connection from Singleton
         try (PreparedStatement pstmt = conn.prepareStatement(sql); // Use try-with-resources for PreparedStatement and ResultSet
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
-                locations.add(new Location(rs.getInt("location_id"), rs.getString("location_name")));
+                locations.add(new LocationRecord(rs.getInt("location_id"), rs.getString("location_name")));
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Failed to retrieve all locations from the database.", e);

@@ -4,7 +4,7 @@ import com.agrisys.Utils.AgrisysChartBuilder;
 import com.agrisys.Utils.Gauge; // Sørg for at importere jeres Gauge klasse
 import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.dto.ChartSeriesData;
-import com.agrisys.model.Location;
+import com.agrisys.model.LocationRecord;
 import com.agrisys.model.PigSummary;
 import com.agrisys.service.ChartService;
 import com.agrisys.service.LocationService;
@@ -27,6 +27,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -44,7 +45,7 @@ public class PigsController {
     @FXML private TableColumn<PigSummary, Double> colWeight;
     @FXML private TableColumn<PigSummary, Double> colFCR;
 
-    @FXML private ComboBox<Location> locationSelector; // New FXML element for location dropdown
+    @FXML private ComboBox<LocationRecord> locationSelector; 
 
     // De to containere i højre side
     @FXML private StackPane chartContainer;
@@ -69,10 +70,25 @@ public class PigsController {
         setupTable();
         loadLocations(); // Load locations into the ComboBox
         
+        // Implementering af StringConverter så dropdown viser ID i stedet for navn
+        locationSelector.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(LocationRecord loc) {
+                if (loc == null) return "";
+                // Hvis det er vores dummy "Alle" (ID 0), vis teksten "Alle"
+                return (loc.locationId() == 0) ? "Alle" : String.valueOf(loc.locationId());
+            }
+
+            @Override
+            public LocationRecord fromString(String string) {
+                return null; // Ikke nødvendig for read-only ComboBox
+            }
+        });
+
         // Add listener for location selection changes
         locationSelector.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             // If newVal is null (e.g., ComboBox cleared), treat as "All Locations" (null ID)
-            refreshPigData(newVal != null ? newVal.id() : null);
+            refreshPigData(newVal != null ? newVal.locationId() : null);
         });
 
         // Default selection: "Alle Lokationer" (our special ID 0)
@@ -120,9 +136,9 @@ public class PigsController {
      * Loads all available locations into the ComboBox, including an "All Locations" option.
      */
     private void loadLocations() {
-        List<Location> locs = new ArrayList<>();
+        List<LocationRecord> locs = new ArrayList<>();
         // Add a special "All Locations" option with ID 0
-        locs.add(new Location(0, "Alle Lokationer"));
+        locs.add(new LocationRecord(0, "Alle Lokationer"));
         locs.addAll(locationService.getAllLocations()); // Fetch actual locations
         locationSelector.setItems(FXCollections.observableArrayList(locs));
     }
@@ -215,8 +231,8 @@ public class PigsController {
             stage.showAndWait();
             
             // Refresh table and charts after possible edits for the currently selected location
-            Location selectedLocation = locationSelector.getSelectionModel().getSelectedItem();
-            refreshPigData(selectedLocation != null ? selectedLocation.id() : null);
+            LocationRecord selectedLocation = locationSelector.getSelectionModel().getSelectedItem();
+            refreshPigData(selectedLocation != null ? selectedLocation.locationId() : null);
 
         } catch (IOException e) {
             UIErrorReport.showDatabaseError(e);
@@ -238,8 +254,8 @@ public class PigsController {
             stage.showAndWait();
 
             // Opdater alt data live efter lukning af dialogen for den AKTUELLE valgte lokation
-            Location selectedLocation = locationSelector.getSelectionModel().getSelectedItem();
-            refreshPigData(selectedLocation != null ? selectedLocation.id() : null);
+            LocationRecord selectedLocation = locationSelector.getSelectionModel().getSelectedItem();
+            refreshPigData(selectedLocation != null ? selectedLocation.locationId() : null);
 
         } catch (IOException e) {
             e.printStackTrace();
