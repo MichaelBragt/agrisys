@@ -19,10 +19,24 @@
 
 /* Top Bar */
 .top-bar {
-    -fx-background-color: -agri-secondary;
-    -fx-border-color: -agri-border-color;
-    -fx-border-width: 0 0 1 0;
-    -fx-padding: 8 16 8 16;
+    -fx-background-color: transparent;
+    -fx-padding: 4 16 0 16;
+    -fx-spacing: 10px;
+}
+
+.profile-button {
+    -fx-background-color: transparent;
+    -fx-border-color: -agri-primary;
+    -fx-border-radius: 4px;
+    -fx-text-fill: -agri-primary;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4px;
+    -fx-padding: 6 14 6 14;
+    -fx-cursor: hand;
+}
+
+.profile-button:hover {
+    -fx-background-color: #e2e8f0;
 }
 
 .logout-button {
@@ -30,7 +44,7 @@
     -fx-text-fill: -agri-text-light;
     -fx-font-weight: bold;
     -fx-background-radius: 4px;
-    -fx-padding: 8 16 8 16;
+    -fx-padding: 6 14 6 14;
     -fx-cursor: hand;
 }
 

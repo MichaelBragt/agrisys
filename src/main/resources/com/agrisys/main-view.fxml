@@ -7,24 +7,37 @@
       xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.agrisys.controller.MainController">
    <children>
-      <TabPane fx:id="mainTabPane" side="TOP" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
-         <tabs>
-            <Tab text="Home">
-               <content>
-                  <fx:include source="home-view.fxml" />
-               </content>
-            </Tab>
-            <Tab text="Grise">
-               <content>
-                  <fx:include source="pigs-view.fxml" />
-               </content>
-            </Tab>
-            <Tab text="Handlinger">
-               <content>
-                  <fx:include source="handlinger-view.fxml" />
-               </content>
-            </Tab>
-         </tabs>
-      </TabPane>
+      <AnchorPane VBox.vgrow="ALWAYS">
+         <children>
+            <TabPane side="TOP" tabClosingPolicy="UNAVAILABLE"
+                     AnchorPane.topAnchor="0.0" AnchorPane.rightAnchor="0.0"
+                     AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
+               <tabs>
+                  <Tab text="Home">
+                     <content>
+                        <fx:include source="home-view.fxml" />
+                     </content>
+                  </Tab>
+                  <Tab text="Grise">
+                     <content>
+                        <fx:include source="pigs-view.fxml" />
+                     </content>
+                  </Tab>
+                  <Tab text="Handlinger">
+                     <content>
+                        <fx:include source="handlinger-view.fxml" />
+                     </content>
+                  </Tab>
+               </tabs>
+            </TabPane>
+            <HBox alignment="CENTER_RIGHT" styleClass="top-bar"
+                  AnchorPane.topAnchor="4.0" AnchorPane.rightAnchor="16.0">
+               <children>
+                  <Button onAction="#handleProfile" styleClass="profile-button" text="Profil" />
+                  <Button onAction="#handleLogout" styleClass="logout-button" text="Log ud" />
+               </children>
+            </HBox>
+         </children>
+      </AnchorPane>
    </children>
 </VBox>
