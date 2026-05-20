@@ -81,6 +81,16 @@ public class PigDetailsService {
         }
     }
 
+    public ChartSeriesData getPigFeedHistory(String animalNumber, int assignmentId) throws SQLException {
+        var points = pptDataDAO.getFeedHistory(assignmentId);
+        return new ChartSeriesData("Foderindtag for " + animalNumber, points);
+    }
+
+    public ChartSeriesData getPigFcrHistory(String animalNumber, int assignmentId) throws SQLException {
+        var points = pptDataDAO.getIndividualFcrHistory(assignmentId);
+        return new ChartSeriesData("FCR udvikling for " + animalNumber, points);
+    }
+
     /**
      * Removes the association between a pig and its responder.
      * @param conn The active transactional connection.
