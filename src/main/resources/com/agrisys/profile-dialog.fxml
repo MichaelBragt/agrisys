@@ -26,9 +26,7 @@
                </GridPane>
             </VBox>
          </content>
-         <buttonTypes>
-            <ButtonType buttonData="OK_DONE" text="Luk" />
-         </buttonTypes>
+         <ButtonType buttonData="OK_DONE" text="Luk" />
       </DialogPane>
    </dialogPane>
 </Dialog>
