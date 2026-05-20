@@ -1,8 +1,17 @@
 package com.agrisys.controller;
 
 import com.agrisys.DbConnect;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TabPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+
+import java.util.Optional;
 
 /**
  * Orchestrator for the main application shell.
@@ -15,12 +24,44 @@ public class MainController {
 
     public void initialize() {
         // Initialization logic for the TabPane shell
+        addLogoutButton();
 
         // Just a line used for testing db connection
         // is to be removed
         System.out.println("Before D");
         DbConnect connection = DbConnect.UNIQUE_CONNECT;
         System.out.println("Before D");
+    }
 
+    private void addLogoutButton() {
+        Button logoutButton = new Button("Log ud");
+        logoutButton.getStyleClass().add("logout-button");
+        logoutButton.setOnAction(event -> {
+            event.consume();
+            handleLogout();
+        });
+
+        HBox topBar = new HBox(logoutButton);
+        topBar.getStyleClass().add("top-bar");
+        topBar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+
+        VBox mainLayout = (VBox) mainTabPane.getParent();
+        mainLayout.getChildren().addFirst(topBar);
+    }
+
+    private void handleLogout() {
+        Alert confirmLogout = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmLogout.setTitle("Log ud");
+        confirmLogout.setHeaderText("Vil du logge ud?");
+        confirmLogout.setContentText("Programmet lukkes, hvis du fortsætter.");
+
+        ButtonType logoutButton = new ButtonType("Log ud", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Annuller", ButtonBar.ButtonData.CANCEL_CLOSE);
+        confirmLogout.getButtonTypes().setAll(logoutButton, cancelButton);
+
+        Optional<ButtonType> result = confirmLogout.showAndWait();
+        if (result.isPresent() && result.get() == logoutButton) {
+            Platform.exit();
+        }
     }
 }
