@@ -18,16 +18,22 @@ import java.util.Optional;
  */
 public class PigDetailController {
     // Declaring varous UI elements
-    @FXML private Label lblAnimalNumber, lblResponderId, lblLocation, lblWeight;
+    @FXML private Label lblAnimalNumber, lblResponderId, lblLocation, lblWeight, lblChartHeader;
+    @FXML private Button btnVegt, btnFoder, btnFcr;
     @FXML private DatePicker dpBirthDate;
     @FXML private ComboBox<String> cbStatus;
     @FXML private StackPane gaugeContainer, chartContainer;
     @FXML private Button btnEdit, btnSave, btnRemoveResponder;
 
+
     // declaring services, DTO's and vars we need
     private final PigDetailsService service = new PigDetailsService();
     private PigDetailDTO currentPig;
     private boolean isEditMode = false;
+
+    // Styring af den aktive graftype
+    private enum ChartType { VEGT, FODER, FCR }
+    private ChartType activeChartType = ChartType.VEGT; // Standardgraf ved åbning
 
     @FXML
     public void initialize() {
@@ -80,6 +86,67 @@ public class PigDetailController {
                 System.err.println("Could not load chart data: " + e.getMessage());
             }
         }
+    }
+    /**
+     * NY METODE: Henter den korrekte data og tegner grafen baseret på knappernes tilstand
+     */
+    private void opdaterIndividuelGraf(PigDetailDTO dto) {
+        if (dto == null || dto.assignmentId() == null) return;
+
+        try {
+            chartContainer.getChildren().clear();
+
+            // Opdater knappernes visuelle styling i forhold til hvad der er aktivt
+            btnVegt.setStyle(activeChartType == ChartType.VEGT ? "-fx-background-color: #2196F3; -fx-text-fill: white;" : "");
+            btnFoder.setStyle(activeChartType == ChartType.FODER ? "-fx-background-color: #4CAF50; -fx-text-fill: white;" : "");
+            btnFcr.setStyle(activeChartType == ChartType.FCR ? "-fx-background-color: #FF9800; -fx-text-fill: white;" : "");
+
+            ChartSeriesData series;
+            javafx.scene.chart.LineChart<String, Number> chart;
+
+            // Switch-case der håndterer datakilden og opdaterer FXML-overskriften dynamic
+            switch (activeChartType) {
+                case FODER -> {
+                    lblChartHeader.setText("Foderindtag pr. besøg");
+                    series = service.getPigFeedHistory(dto.animalNumber(), dto.assignmentId());
+                    chart = AgrisysChartBuilder.buildLineChart("", "Dato", "Foder (gram)", "Foderindtag (g)", List.of(series));
+                }
+                case FCR -> {
+                    lblChartHeader.setText("Individuel FCR udvikling");
+                    series = service.getPigFcrHistory(dto.animalNumber(), dto.assignmentId());
+                    chart = AgrisysChartBuilder.buildLineChart("", "Dato", "FCR Værdi", "FCR ratio", List.of(series));
+                }
+                default -> { // VEGT
+                    lblChartHeader.setText("Vægtudvikling over tid");
+                    series = service.getPigWeightHistory(dto.animalNumber(), dto.assignmentId());
+                    chart = AgrisysChartBuilder.buildLineChart("", "Dato", "Vægt (kg)", "Vægt (kg)", List.of(series));
+                }
+            }
+
+            chartContainer.getChildren().add(chart);
+
+        } catch (SQLException e) {
+            System.err.println("Could not load chart data: " + e.getMessage());
+        }
+    }
+
+    // TILFØJET: De tre onAction-metoder som kaldes fra jeres FXML-knapper
+    @FXML
+    private void handleVegtChartAction() {
+        activeChartType = ChartType.VEGT;
+        opdaterIndividuelGraf(currentPig);
+    }
+
+    @FXML
+    private void handleFoderChartAction() {
+        activeChartType = ChartType.FODER;
+        opdaterIndividuelGraf(currentPig);
+    }
+
+    @FXML
+    private void handleFcrChartAction() {
+        activeChartType = ChartType.FCR;
+        opdaterIndividuelGraf(currentPig);
     }
 
     @FXML
