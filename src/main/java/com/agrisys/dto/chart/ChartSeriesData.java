@@ -1,4 +1,4 @@
-package com.agrisys.dto;
+package com.agrisys.dto.chart;
 
 import java.util.List;
 

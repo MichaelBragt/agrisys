@@ -1,8 +1,8 @@
 package com.agrisys.service;
 
 import com.agrisys.DbConnect;
-import com.agrisys.dto.ChartPoint;
-import com.agrisys.dto.ChartSeriesData;
+import com.agrisys.dto.chart.ChartPoint;
+import com.agrisys.dto.chart.ChartSeriesData;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

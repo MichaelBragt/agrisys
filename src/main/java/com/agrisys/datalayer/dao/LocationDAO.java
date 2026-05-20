@@ -1,7 +1,7 @@
-package com.agrisys.dao;
+package com.agrisys.datalayer.dao;
 
 import com.agrisys.DbConnect;
-import com.agrisys.model.LocationRecord;
+import com.agrisys.datalayer.entity.LocationRecord;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

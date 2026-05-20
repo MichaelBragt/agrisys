@@ -1,9 +1,10 @@
 package com.agrisys.controller;
 
 import com.agrisys.Utils.*;
-import com.agrisys.dto.*;
 import com.agrisys.Utils.UIErrorReport;
-import com.agrisys.model.PigSummary;
+import com.agrisys.dto.chart.ChartSeriesData;
+import com.agrisys.model.view.PigDetailDTO;
+import com.agrisys.model.view.PigSummary;
 import com.agrisys.service.PigDetailsService;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;

@@ -1,7 +1,7 @@
-package com.agrisys.dao;
+package com.agrisys.datalayer.dao;
 
 import com.agrisys.DbConnect;
-import com.agrisys.model.AppUserRecord;
+import com.agrisys.datalayer.entity.AppUserRecord;
 import java.sql.*;
 import java.util.Optional;
 

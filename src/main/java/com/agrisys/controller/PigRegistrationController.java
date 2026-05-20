@@ -1,7 +1,10 @@
 package com.agrisys.controller;
 
-import com.agrisys.dao.*;
-import com.agrisys.model.*;
+import com.agrisys.datalayer.dao.LocationDAO;
+import com.agrisys.datalayer.dao.RespondersDAO;
+import com.agrisys.datalayer.entity.LocationRecord;
+import com.agrisys.datalayer.entity.PigRecord;
+import com.agrisys.datalayer.entity.RespondersRecord;
 import com.agrisys.service.PigRegistrationService;
 import com.agrisys.Utils.UIErrorReport;
 import javafx.fxml.FXML;
@@ -9,7 +12,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import java.sql.SQLException;
 import javafx.util.StringConverter;
-import java.time.LocalDate;
 
 public class PigRegistrationController {
     @FXML private TextField animalNumberField, newResponderField;

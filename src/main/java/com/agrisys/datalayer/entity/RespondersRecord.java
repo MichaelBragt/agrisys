@@ -1,4 +1,4 @@
-package com.agrisys.model;
+package com.agrisys.datalayer.entity;
 
 /**
  * Represents the physical RFID hardware (Responders).

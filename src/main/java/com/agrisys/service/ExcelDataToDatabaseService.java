@@ -1,10 +1,12 @@
 package com.agrisys.service;
 
 import com.agrisys.DbConnect;
-import com.agrisys.dao.*;
-import com.agrisys.dto.ExcelImportDTO;
-import com.agrisys.model.LocationRecord;
-import com.agrisys.model.PptDataRecord;
+import com.agrisys.datalayer.dao.*;
+import com.agrisys.datalayer.entity.PigLocationRecord;
+import com.agrisys.datalayer.entity.ResponderAssignmentRecord;
+import com.agrisys.dto.excel.ExcelImportDTO;
+import com.agrisys.datalayer.entity.LocationRecord;
+import com.agrisys.datalayer.entity.PptDataRecord;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -123,12 +125,12 @@ public class ExcelDataToDatabaseService {
         // Check if an active assignment already exists for this responder
         return assignmentDAO.findActiveAssignmentByResponderId(conn, responder)
                 .filter(a -> a.animalNumber().equals(animal))
-                .map(com.agrisys.model.ResponderAssignmentRecord::assignmentId)
+                .map(ResponderAssignmentRecord::assignmentId)
                 .orElseGet(() -> {
                     try {
                         // Close old assignments for this responder if they exist, then create new
                         // (Simplified: Just create new assignment for this example)
-                        return assignmentDAO.create(conn, new com.agrisys.model.ResponderAssignmentRecord(
+                        return assignmentDAO.create(conn, new ResponderAssignmentRecord(
                             null, animal, responder, time, null));
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
@@ -142,7 +144,7 @@ public class ExcelDataToDatabaseService {
                 .isPresent();
         
         if (!exists) {
-            pigLocationDAO.create(conn, new com.agrisys.model.PigLocationRecord(null, animal, locId, time, null));
+            pigLocationDAO.create(conn, new PigLocationRecord(null, animal, locId, time, null));
         }
     }
 
