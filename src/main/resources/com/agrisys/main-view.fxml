@@ -6,18 +6,25 @@
 <VBox prefHeight="768.0" prefWidth="1024.0" stylesheets="@style.css"
       xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.agrisys.controller.MainController">
-   <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
-      <Tab text="Home">
-         <fx:include source="home-view.fxml" />
-      </Tab>
-      <Tab text="Grise">
-         <fx:include source="pigs-view.fxml" />
-      </Tab>
-      <Tab text="Bokse">
-         <fx:include source="location-view.fxml" />
-      </Tab>
-      <Tab text="Handlinger">
-         <fx:include source="handlinger-view.fxml" />
-      </Tab>
-   </TabPane>
+   <children>
+      <TabPane fx:id="mainTabPane" side="TOP" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+         <tabs>
+            <Tab text="Home">
+               <content>
+                  <fx:include source="home-view.fxml" />
+               </content>
+            </Tab>
+            <Tab text="Grise">
+               <content>
+                  <fx:include source="pigs-view.fxml" />
+               </content>
+            </Tab>
+            <Tab text="Handlinger">
+               <content>
+                  <fx:include source="handlinger-view.fxml" />
+               </content>
+            </Tab>
+         </tabs>
+      </TabPane>
+   </children>
 </VBox>

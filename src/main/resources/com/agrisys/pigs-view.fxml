@@ -4,8 +4,10 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.geometry.Insets?>
 
@@ -15,7 +17,10 @@
       styleClass="view-container">
     <children>
         <HBox spacing="20" alignment="CENTER_LEFT">
-            <Label text="Pig Management (Grise)" styleClass="header-label" />
+            <Label text="Grise Besætning (Alle)" styleClass="header-label" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label text="Vælg Lokation:" style="-fx-font-weight: bold;"/>
+            <ComboBox fx:id="locationSelector" prefWidth="200.0" promptText="Vælg sti..."/>
         </HBox>
 
         <HBox spacing="20" VBox.vgrow="ALWAYS">
@@ -40,19 +45,17 @@
                 </HBox>
             </VBox>
 
-            <VBox fx:id="sideContent" prefWidth="450.0" minWidth="400.0" styleClass="sidebar-container" spacing="15" HBox.hgrow="NEVER">
+            <VBox fx:id="sideContent" prefWidth="450.0" minWidth="400.0" styleClass="sidebar-container" spacing="0" HBox.hgrow="NEVER">
 
-                <VBox spacing="5" VBox.vgrow="ALWAYS">
-                    <Label text="Besætningens FCR Trend (Live)" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                <VBox spacing="0" VBox.vgrow="ALWAYS">
                     <StackPane fx:id="chartContainer" VBox.vgrow="ALWAYS" minHeight="200.0" />
                 </VBox>
 
-                <VBox spacing="5" VBox.vgrow="ALWAYS">
-                    <Label text="Vægtudvikling - Gris (Live)" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                <VBox spacing="0" VBox.vgrow="ALWAYS">
                     <StackPane fx:id="weightChartContainer" VBox.vgrow="ALWAYS" minHeight="200.0" />
                 </VBox>
 
-                <VBox spacing="5">
+                <VBox spacing="2">
                     <Label text="Aktuel Staldstatus" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
                     <StackPane fx:id="gaugeContainer2" alignment="CENTER" minHeight="150.0" />
                 </VBox>

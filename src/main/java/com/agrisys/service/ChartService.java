@@ -16,10 +16,30 @@ public class ChartService {
      * Henter den overordnede FCR trend dag for dag for hele besætningen.
      */
     public ChartSeriesData hentFcrTrendForBestand() throws SQLException {
+        return hentFcrTrend(null);
+    }
+
+    /**
+     * Henter FCR trend for en specifik lokation eller hele besætningen.
+     * @param locationId Hvis null, hentes data for hele besætningen.
+     */
+    public ChartSeriesData hentFcrTrend(Integer locationId) throws SQLException {
         List<ChartPoint> punkter = new ArrayList<>();
 
-        // SQL der tager dagens samlede foder (i gram) og holder det op mod
+        String locationFilter = (locationId == null) ? "" : 
+            " JOIN Pig_Location pl ON ra.animal_number = pl.animal_number WHERE pl.departed_at IS NULL AND pl.location_id = " + locationId + " AND ";
+        
+        String dateFilterPrefix = (locationId == null) ? " WHERE " : "";
+
         // grisenes forventede daglige tilvækst (1000g pr. gris om dagen).
+        // CONVERT (style 120) corresponds to ODBC yyy-mm-dd hh:mi:ss
+        // by converting to varchar(10) we strip of the time portion
+        // effectively leaving us with only the dates
+        // The calculation total feed at specific day / unique number of animals * 1000
+        // gives us an estimated FCR based on healthy pigs under normal conditions should
+        // grow by 1000 grams per day.
+        // if we want to get a calculated FCR we should use SQL Windows functions
+        // we also filter out the most recent day in the result because that might be a day not finished
         String sql = """
             SELECT 
                 CONVERT(VARCHAR(10), d.visit_time, 120) AS Dato,
@@ -27,12 +47,16 @@ public class ChartService {
                 CAST(SUM(d.feed_intake) / (COUNT(DISTINCT ra.animal_number) * 1000.0) AS DOUBLE PRECISION) AS BeregnetFCR
             FROM PPT_Data d
             JOIN Responder_Assignment ra ON d.assignment_id = ra.assignment_id
+            """ + locationFilter + dateFilterPrefix + """
+            CONVERT(VARCHAR(10), d.visit_time, 120) < (
+                SELECT MAX(CONVERT(VARCHAR(10), visit_time, 120)) FROM PPT_Data
+            )
             GROUP BY CONVERT(VARCHAR(10), d.visit_time, 120)
             ORDER BY Dato ASC
         """;
 
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
@@ -43,34 +67,50 @@ public class ChartService {
                 fcr = Math.round(fcr * 100.0) / 100.0;
 
                 // Vi filtrerer den sidste dag fra, hvis den kun indeholder halve data (f.eks. pga. eksport-tidspunkt)
-                if (fcr > 1.0 && fcr < 6.0) {
+                // nope den filtrere bare fcr værdier under 1 og over 6 fra..
+                // to be deleted later, skal bare add'e punkterne
+                // sidste dato er filtreret i sql'en :-)
+//                if (fcr > 1.0 && fcr < 6.0) {
                     punkter.add(new ChartPoint(dato, fcr));
-                }
+//                }
             }
         }
 
-        return new ChartSeriesData("Hele Bestanden", punkter);
+        return new ChartSeriesData(locationId == null ? "Hele Bestanden" : "Lokation " + locationId, punkter);
     }
 
     /**
      * Henter den gennemsnitlige vægtudvikling (i kg) dag for dag for hele besætningen.
      */
     public ChartSeriesData hentGennemsnitVaegtForBestand() throws SQLException {
+        return hentGennemsnitVaegt(null);
+    }
+
+    /**
+     * Henter gennemsnitsvægt for en specifik lokation eller hele besætningen.
+     */
+    public ChartSeriesData hentGennemsnitVaegt(Integer locationId) throws SQLException {
         List<ChartPoint> punkter = new ArrayList<>();
+
+        String joinClause = (locationId == null) ? "" : 
+            " JOIN Responder_Assignment ra ON d.assignment_id = ra.assignment_id JOIN Pig_Location pl ON ra.animal_number = pl.animal_number ";
+        
+        String whereClause = (locationId == null) ? " WHERE d.pig_weight > 0 " : 
+            " WHERE d.pig_weight > 0 AND pl.location_id = " + locationId + " AND pl.departed_at IS NULL ";
 
         String sql = """
         SELECT 
-            CONVERT(VARCHAR(10), visit_time, 120) AS Dato,
+            CONVERT(VARCHAR(10), d.visit_time, 120) AS Dato,
             -- Vi tager gennemsnitsvægten for dagen og laver gram om til kg
-            CAST(AVG(pig_weight / 1000.0) AS DOUBLE PRECISION) AS GnsVaegtKG
-        FROM PPT_Data
-        WHERE pig_weight > 0
-        GROUP BY CONVERT(VARCHAR(10), visit_time, 120)
+            CAST(AVG(d.pig_weight / 1000.0) AS DOUBLE PRECISION) AS GnsVaegtKG
+        FROM PPT_Data d
+        """ + joinClause + whereClause + """
+        GROUP BY CONVERT(VARCHAR(10), d.visit_time, 120)
         ORDER BY Dato ASC
     """;
 
-        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
+        Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {

@@ -21,5 +21,4 @@ public final class AppConfig {
     public static final String MAIN_VIEW = "main-view.fxml";
     public static final String HOME_VIEW = "home-view.fxml";
     public static final String PIGS_VIEW = "pigs-view.fxml";
-    public static final String LOCATION_VIEW = "location-view.fxml";
 }

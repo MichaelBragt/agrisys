@@ -21,16 +21,26 @@ public class PigService {
     /**
      * Retrieves summary data and performs business logic calculations.
      * 
+     * @param locationId The ID of the location to filter by, or null for all pigs.
      * @return List of processed PigSummary objects.
      */
-    public List<PigSummary> getActivePigDashboardData() {
+    public List<PigSummary> getPigDashboardData(Integer locationId) {
         try {
-            // In a real scenario, we might calculate FCR here 
-            // by fetching feed data and weight gain per pig.
-            return pigDAO.getPigSummaries();
+            if (locationId == null) {
+                return pigDAO.getPigSummaries(); // Fetch all pigs
+            } else {
+                return pigDAO.getPigSummariesByLocation(locationId); // Fetch pigs for a specific location
+            }
         } catch (SQLException e) {
             // Logic for logging (e.g., Log4j) should go here
             return List.of();
         }
     }
+
+    /**
+     * This method is now redundant as getPigDashboardData handles both cases.
+     * @deprecated Use {@link #getPigDashboardData(Integer)} instead.
+     */
+    @Deprecated
+    public List<PigSummary> getPigsByLocation(int locationId) { return getPigDashboardData(locationId); }
 }
