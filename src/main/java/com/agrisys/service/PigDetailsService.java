@@ -1,15 +1,17 @@
 package com.agrisys.service;
 
 import com.agrisys.DbConnect;
-import com.agrisys.dao.*;
-import com.agrisys.dto.ChartSeriesData;
-import com.agrisys.dto.PigDetailDTO;
-import com.agrisys.model.PigRecord;
+import com.agrisys.datalayer.dao.PigDAO;
+import com.agrisys.datalayer.dao.PptDataDAO;
+import com.agrisys.datalayer.dao.ResponderAssignmentDAO;
+import com.agrisys.datalayer.dao.RespondersDAO;
+import com.agrisys.dto.chart.ChartSeriesData;
+import com.agrisys.model.view.PigDetailDTO;
+
 import java.time.LocalDate;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 /**

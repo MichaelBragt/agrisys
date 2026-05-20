@@ -1,6 +1,6 @@
 package com.agrisys.service;
 
-import com.agrisys.dto.ExcelImportDTO;
+import com.agrisys.dto.excel.ExcelImportDTO;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 

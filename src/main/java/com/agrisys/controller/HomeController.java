@@ -3,8 +3,8 @@ package com.agrisys.controller;
 import com.agrisys.Utils.AgrisysChartBuilder;
 import com.agrisys.Utils.Gauge;
 import com.agrisys.Utils.UIErrorReport;
-import com.agrisys.dto.ChartSeriesData;
-import com.agrisys.dto.ExcelImportDTO;
+import com.agrisys.dto.chart.ChartSeriesData;
+import com.agrisys.dto.excel.ExcelImportDTO;
 import com.agrisys.service.ChartService; // Vores nye service
 import com.agrisys.service.ExcelDataToDatabaseService;
 import com.agrisys.service.ExcelParserService;

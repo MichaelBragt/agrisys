@@ -1,7 +1,7 @@
-package com.agrisys.dao;
+package com.agrisys.datalayer.dao;
 
 import com.agrisys.DbConnect;
-import com.agrisys.model.PigLocationRecord;
+import com.agrisys.datalayer.entity.PigLocationRecord;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.Optional;

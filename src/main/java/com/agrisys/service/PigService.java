@@ -1,7 +1,7 @@
 package com.agrisys.service;
 
-import com.agrisys.dao.PigDAO;
-import com.agrisys.model.PigSummary;
+import com.agrisys.datalayer.dao.PigDAO;
+import com.agrisys.model.view.PigSummary;
 import java.sql.SQLException;
 import java.util.List;
 

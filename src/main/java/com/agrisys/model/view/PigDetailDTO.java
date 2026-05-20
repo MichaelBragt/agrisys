@@ -1,4 +1,4 @@
-package com.agrisys.dto;
+package com.agrisys.model.view;
 
 import java.time.LocalDate;
 

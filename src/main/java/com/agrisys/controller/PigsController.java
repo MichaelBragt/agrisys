@@ -3,9 +3,9 @@ package com.agrisys.controller;
 import com.agrisys.Utils.AgrisysChartBuilder;
 import com.agrisys.Utils.Gauge; // Sørg for at importere jeres Gauge klasse
 import com.agrisys.Utils.UIErrorReport;
-import com.agrisys.dto.ChartSeriesData;
-import com.agrisys.model.LocationRecord;
-import com.agrisys.model.PigSummary;
+import com.agrisys.dto.chart.ChartSeriesData;
+import com.agrisys.datalayer.entity.LocationRecord;
+import com.agrisys.model.view.PigSummary;
 import com.agrisys.service.ChartService;
 import com.agrisys.service.LocationService;
 import com.agrisys.service.PigService;

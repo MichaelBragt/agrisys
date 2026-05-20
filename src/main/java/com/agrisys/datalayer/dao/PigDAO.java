@@ -1,9 +1,9 @@
-package com.agrisys.dao;
+package com.agrisys.datalayer.dao;
 
 import com.agrisys.DbConnect;
-import com.agrisys.model.PigRecord;
-import com.agrisys.model.PigSummary;
-import com.agrisys.dto.PigDetailDTO;
+import com.agrisys.datalayer.entity.PigRecord;
+import com.agrisys.model.view.PigSummary;
+import com.agrisys.model.view.PigDetailDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
