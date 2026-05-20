@@ -9,7 +9,9 @@ import javafx.scene.shape.Arc;
 import javafx.scene.shape.ArcType;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 
 // Primær forfatter: Michael Bragt
 
@@ -30,7 +32,7 @@ public class Gauge extends StackPane {
      * @param radius
      */
     public Gauge(double radius) {
-        double thickness = radius * 0.15;
+        double thickness = radius * 0.20;
         double totalSize = (radius * 2) + thickness;
 
         this.setMinSize(totalSize, totalSize);
@@ -55,10 +57,10 @@ public class Gauge extends StackPane {
         Group shapeLayer = new Group(backgroundTrack, statusArc);
 
         valueText = new Text("N/A");
-        valueText.setFont(Font.font("Arial", radius * 0.35));
+        valueText.setFont(Font.font("Arial", radius * 0.40));
 
         statusLabel = new Text("Venter...");
-        statusLabel.setFont(Font.font("Arial", radius * 0.16));
+        statusLabel.setFont(Font.font("Arial", FontWeight.BOLD, radius * 0.22));
 
         VBox textContainer = new VBox(2, valueText, statusLabel);
         textContainer.setAlignment(Pos.CENTER);
@@ -83,6 +85,7 @@ public class Gauge extends StackPane {
 
         // 1. Vis verdien med 2 desimaler i midten
         valueText.setText(String.format("%.2f", fcr));
+        statusLabel.setTextAlignment(TextAlignment.CENTER);
 
         // 2. Map FCR-verdien til en prosentbue (1.5 er "perfekt/full", 4.5 er "kritisk/tom")
         // Vi klamper verdien mellom 1.5 og 4.5 så buen ikke går amok
@@ -106,12 +109,12 @@ public class Gauge extends StackPane {
             // Fade mellom Gul (0.5) og Grønn (1.0)
             double t = (goodnessFactor - 0.5) * 2.0;
             dynamiskFarge = middelsFcrFarge.interpolate(godFcrFarge, t);
-            statusLabel.setText("OPTIMAL UTNYTTELSE");
+            statusLabel.setText("FCR\nOPTIMAL");
         } else {
             // Fade mellom Rød (0.0) og Gul (0.5)
             double t = goodnessFactor * 2.0;
             dynamiskFarge = daarligFcrFarge.interpolate(middelsFcrFarge, t);
-            statusLabel.setText("HØYT FODERFORBRUK");
+            statusLabel.setText("FCR\nKRITISK");
         }
 
         // Push fargen til både buen og tekst-labelen

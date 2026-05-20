@@ -37,6 +37,7 @@ public final class AgrisysChartBuilder {
 
         LineChart<String, Number> lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setTitle(chartTitle);
+        lineChart.setLegendVisible(false); // Removes the 'button-like' legend below the chart
         lineChart.setAnimated(false);
 
         for (ChartSeriesData seriesData : seriesList) {

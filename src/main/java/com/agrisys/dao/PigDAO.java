@@ -134,6 +134,50 @@ public class PigDAO {
     }
 
     /**
+     * Henter summary data for grise på en specifik lokation.
+     */
+    public List<PigSummary> getPigSummariesByLocation(int locationId) throws SQLException {
+        List<PigSummary> summaries = new ArrayList<>();
+        String sql = """
+            SELECT 
+                p.animal_number, 
+                ra.responder_id, 
+                pl.location_id, 
+                p.birth_date,
+                latest_weight.pig_weight
+            FROM Pig p
+            INNER JOIN Pig_Location pl ON p.animal_number = pl.animal_number AND pl.departed_at IS NULL
+            LEFT JOIN Responder_Assignment ra ON p.animal_number = ra.animal_number AND ra.date_removed IS NULL
+            OUTER APPLY (
+                SELECT TOP 1 pd.pig_weight 
+                FROM PPT_Data pd 
+                WHERE pd.assignment_id = ra.assignment_id 
+                ORDER BY pd.visit_time DESC
+            ) AS latest_weight
+            WHERE p.status = 'Aktiv' AND pl.location_id = ?
+            """;
+
+        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, locationId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Date birth = rs.getDate("birth_date");
+                    summaries.add(new PigSummary(
+                        rs.getString("animal_number"),
+                        rs.getString("responder_id"),
+                        rs.getInt("location_id"),
+                        birth != null ? birth.toLocalDate() : null,
+                        rs.getDouble("pig_weight"),
+                        null
+                    ));
+                }
+            }
+        }
+        return summaries;
+    }
+
+    /**
      * Fetches full details for a specific pig, including the active responder and location.
      * @param animalNumber The unique ID of the pig.
      * @return PigDetailDTO containing aggregated state.
