@@ -1,4 +1,4 @@
-package com.agrisys.model;
+package com.agrisys.datalayer.entity;
 
 /**
  * Represents a physical location or pen where pigs can be placed.

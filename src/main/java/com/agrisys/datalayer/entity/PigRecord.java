@@ -1,4 +1,4 @@
-package com.agrisys.model;
+package com.agrisys.datalayer.entity;
 
 import java.time.LocalDate;
 

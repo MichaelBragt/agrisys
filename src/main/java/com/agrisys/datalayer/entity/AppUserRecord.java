@@ -1,4 +1,4 @@
-package com.agrisys.model;
+package com.agrisys.datalayer.entity;
 
 /**
  * Immutable representation of an application user.

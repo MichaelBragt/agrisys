@@ -9,7 +9,8 @@ module com.agrisys {
 
     opens com.agrisys to javafx.fxml, javafx.graphics;
     opens com.agrisys.controller to javafx.fxml;
-    opens com.agrisys.model to javafx.base;
     exports com.agrisys;
     exports com.agrisys.controller;
+    opens com.agrisys.datalayer.entity to javafx.base;
+    opens com.agrisys.model.view to javafx.base;
 }

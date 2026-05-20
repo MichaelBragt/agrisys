@@ -1,7 +1,7 @@
 package com.agrisys.Utils;
 
-import com.agrisys.dto.ChartPoint;
-import com.agrisys.dto.ChartSeriesData;
+import com.agrisys.dto.chart.ChartPoint;
+import com.agrisys.dto.chart.ChartSeriesData;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.chart.CategoryAxis;

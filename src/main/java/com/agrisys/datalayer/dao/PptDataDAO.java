@@ -1,8 +1,8 @@
-package com.agrisys.dao;
+package com.agrisys.datalayer.dao;
 
 import com.agrisys.DbConnect;
-import com.agrisys.model.PptDataRecord;
-import com.agrisys.dto.ChartPoint;
+import com.agrisys.datalayer.entity.PptDataRecord;
+import com.agrisys.dto.chart.ChartPoint;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

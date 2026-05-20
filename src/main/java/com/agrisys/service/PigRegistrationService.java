@@ -1,8 +1,15 @@
 package com.agrisys.service;
 
 import com.agrisys.DbConnect;
-import com.agrisys.dao.*;
-import com.agrisys.model.*;
+import com.agrisys.datalayer.dao.PigDAO;
+import com.agrisys.datalayer.dao.PigLocationDAO;
+import com.agrisys.datalayer.dao.ResponderAssignmentDAO;
+import com.agrisys.datalayer.dao.RespondersDAO;
+import com.agrisys.datalayer.entity.PigLocationRecord;
+import com.agrisys.datalayer.entity.PigRecord;
+import com.agrisys.datalayer.entity.ResponderAssignmentRecord;
+import com.agrisys.datalayer.entity.RespondersRecord;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
