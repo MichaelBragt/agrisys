@@ -125,6 +125,69 @@
     -fx-text-fill: -agri-text-light;
 }
 
+/* Dialog Container */
+.dialog-container {
+    -fx-background-color: white;
+}
+
+/* Action / Primary Buttons */
+.action-button {
+    -fx-background-color: -agri-primary;
+    -fx-text-fill: -agri-text-light;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4px;
+    -fx-padding: 7 16 7 16;
+    -fx-cursor: hand;
+}
+
+.action-button:hover {
+    -fx-background-color: #123a54;
+}
+
+.primary-button {
+    -fx-background-color: -agri-accent;
+    -fx-text-fill: -agri-text-light;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4px;
+    -fx-padding: 7 16 7 16;
+    -fx-cursor: hand;
+}
+
+.primary-button:hover {
+    -fx-background-color: #2980b9;
+}
+
+/* Delete / Danger Button */
+.delete-button {
+    -fx-background-color: #c0392b;
+    -fx-text-fill: -agri-text-light;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4px;
+    -fx-padding: 7 16 7 16;
+    -fx-cursor: hand;
+}
+
+.delete-button:hover {
+    -fx-background-color: #a93226;
+}
+
+/* Success label used in dialogs */
+.success-label {
+    -fx-text-fill: #27ae60;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+/* Sidebar styling for Grise tab */
+.sidebar-container {
+    -fx-background-color: -agri-secondary;
+    -fx-background-radius: 5px;
+    -fx-border-color: -agri-border-color;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+    -fx-padding: 10px;
+}
+
 /* View Container Styling */
 .view-container {
     -fx-padding: 14px 30px 14px 30px;

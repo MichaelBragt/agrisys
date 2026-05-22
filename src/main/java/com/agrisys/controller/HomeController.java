@@ -8,6 +8,7 @@ import com.agrisys.dto.excel.ExcelImportDTO;
 import com.agrisys.service.ChartService; // Vores nye service
 import com.agrisys.service.ExcelDataToDatabaseService;
 import com.agrisys.service.ExcelParserService;
+import com.agrisys.model.UserSession;
 import javafx.fxml.FXML;
 import javafx.scene.chart.LineChart;
 import javafx.scene.control.Button;
@@ -29,6 +30,10 @@ public class HomeController {
 
     @FXML
     public void initialize() {
+        if (UserSession.getInstance().isRaadgiver()) {
+            importButton.setVisible(false);
+            importButton.setManaged(false);
+        }
         // Opdaterer skærmen med vores live FCR-graf fra databasen
         opdaterDashboardGraf();
     }

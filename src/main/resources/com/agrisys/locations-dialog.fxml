@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="15" stylesheets="@style.css" styleClass="dialog-container"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.agrisys.controller.LocationsController"
+      prefWidth="680" prefHeight="480">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Label text="Håndter Lokationer / Bokse" styleClass="header-label"/>
+
+    <HBox spacing="15" VBox.vgrow="ALWAYS">
+        <TableView fx:id="locationTable" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colId" text="ID" prefWidth="60"/>
+                <TableColumn fx:id="colName" text="Navn" prefWidth="260"/>
+            </columns>
+            <placeholder>
+                <Label text="Ingen lokationer oprettet endnu." />
+            </placeholder>
+        </TableView>
+
+        <VBox spacing="10" minWidth="230">
+            <Label text="Lokationsdetaljer" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+            <TextField fx:id="nameField" promptText="Indtast navn på lokation..."/>
+
+            <Button text="+ Opret ny" onAction="#handleCreate" styleClass="action-button" maxWidth="Infinity"/>
+            <Button text="Omdøb valgt" onAction="#handleUpdate" styleClass="action-button" maxWidth="Infinity"/>
+            <Button text="Slet valgt" onAction="#handleDelete" styleClass="delete-button" maxWidth="Infinity"/>
+            <Button text="Ryd valg" onAction="#handleClear" maxWidth="Infinity"/>
+
+            <Label fx:id="messageLabel" wrapText="true"/>
+        </VBox>
+    </HBox>
+
+    <HBox alignment="CENTER_RIGHT">
+        <Button text="Luk" onAction="#handleClose"/>
+    </HBox>
+</VBox>

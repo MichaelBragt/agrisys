@@ -6,6 +6,7 @@ import com.agrisys.dto.chart.ChartSeriesData;
 import com.agrisys.model.view.PigDetailDTO;
 import com.agrisys.model.view.PigSummary;
 import com.agrisys.service.PigDetailsService;
+import com.agrisys.model.UserSession;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
@@ -39,6 +40,12 @@ public class PigDetailController {
     @FXML
     public void initialize() {
         cbStatus.getItems().addAll("Aktiv", "Slagtet", "Syg");
+        if (UserSession.getInstance().isRaadgiver()) {
+            btnEdit.setVisible(false);
+            btnEdit.setManaged(false);
+            btnRemoveResponder.setVisible(false);
+            btnRemoveResponder.setManaged(false);
+        }
     }
 
     public void initData(PigSummary summary) {
