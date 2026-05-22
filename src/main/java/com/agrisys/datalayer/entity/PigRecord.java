@@ -5,11 +5,11 @@ import java.time.LocalDate;
 /**
  * Represents the biological entity.
  * @param animalNumber Unique identification number (Primary Key).
- * @param birthDate The date the pig was born.
+ //* @param birthDate The date the pig was born.
  * @param status Current health/lifecycle status.
  */
 public record PigRecord(
     String animalNumber, 
-    LocalDate birthDate, 
+    LocalDate birthDate,
     String status
 ) {}
