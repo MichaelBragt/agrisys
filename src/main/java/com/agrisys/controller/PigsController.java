@@ -9,7 +9,6 @@ import com.agrisys.model.view.PigSummary;
 import com.agrisys.service.ChartService;
 import com.agrisys.service.LocationService;
 import com.agrisys.service.PigService;
-import com.agrisys.model.UserSession;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -110,7 +109,7 @@ public class PigsController {
         colResponder.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().responderId()));
         colLocation.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().locationId()));
         colBirthDate.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().birthDate()));
-        colWeight.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().weight()));
+        colWeight.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().currentWeight()));
         colFCR.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().fcr()));
 
         // Here we telle the table to subscribe to the pigSummaries list
@@ -158,9 +157,9 @@ public class PigsController {
         // Update charts and gauge asynchronously to keep UI responsive
         Platform.runLater(() -> {
             try {
-                indlaesBestandGraf(actualLocationId);
-                indlaesVaegtGraf(actualLocationId);
-                visStatusGauge(actualLocationId);
+                readPopulationGraph(actualLocationId);
+                readWeightGraph(actualLocationId);
+                showStatusGauge(actualLocationId);
             } catch (SQLException e) {
                 System.err.println("Fejl ved opdatering af grafer for lokation " + actualLocationId + ": " + e.getMessage());
                 UIErrorReport.showDatabaseError(e);
@@ -168,7 +167,7 @@ public class PigsController {
         });
     }
 
-    private void indlaesBestandGraf(Integer locationId) throws SQLException {
+    private void readPopulationGraph(Integer locationId) throws SQLException {
         try {
         ChartSeriesData fcrData = chartService.getFcrTrend(locationId); // Pass locationId
 
@@ -192,7 +191,7 @@ public class PigsController {
     /**
      * Tegner måleren i bunden af højre side
      */
-    private void visStatusGauge(Integer locationId) throws SQLException {
+    private void showStatusGauge(Integer locationId) throws SQLException {
         try {
             var fcrTrend = chartService.getFcrTrend(locationId); // Pass locationId
 
@@ -305,17 +304,17 @@ public class PigsController {
     /**
      * Loads and displays the average weight trend graph for the selected location or all pigs.
      */
-    private void indlaesVaegtGraf(Integer locationId) throws SQLException {
+    private void readWeightGraph(Integer locationId) throws SQLException {
         try {
-            ChartSeriesData vaegtData = chartService.getAverageWeight(locationId); // Pass locationId
+            ChartSeriesData weightData = chartService.getAverageWeight(locationId); // Pass locationId
 
-            if (vaegtData != null && !vaegtData.points().isEmpty()) {
+            if (weightData != null && !weightData.points().isEmpty()) {
                 LineChart<String, Number> weightChart = AgrisysChartBuilder.buildLineChart(
                         (locationId == null || locationId == 0) ? "Vægtudvikling - Gris (Live)" : "Lokation " + locationId + " Vægtudvikling",
                         "Dato",
                         "Vægt (kg)",
                         "Vægt (kg)", // <--- Den nye parameter
-                        List.of(vaegtData)
+                        List.of(weightData)
                 );
 
                 weightChartContainer.getChildren().clear();

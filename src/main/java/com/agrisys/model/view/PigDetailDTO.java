@@ -9,7 +9,7 @@ import java.time.LocalDate;
  * @param animalNumber  Biological ID
  * @param responderId   Current hardware ID
  * @param assignmentId  PK from Responder_Assignment (for history lookup)
- * @param birthDate     Birth date
+ //* @param birthDate     Birth date
  * @param status        Current status (Aktiv, Slagtet, Syg)
  * @param currentWeight Last recorded weight
  * @param fcr           Calculated FCR

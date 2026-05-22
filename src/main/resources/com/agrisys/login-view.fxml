@@ -19,7 +19,7 @@
     </padding>
 
     <VBox alignment="CENTER" spacing="20" style="-fx-background-color: white; -fx-padding: 40; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);" maxWidth="400">
-        
+
         <Label text="Agrisys Login" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: -agri-primary;"/>
 
         <VBox spacing="5" alignment="CENTER_LEFT">
@@ -44,15 +44,15 @@
         <!-- Test credentials section as requested by the user -->
         <VBox spacing="10" alignment="CENTER" style="-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-border-color: #e9ecef; -fx-border-radius: 4; -fx-background-radius: 4;">
             <Label text="Test Kontoer" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
-            
+
             <VBox spacing="5" alignment="CENTER">
                 <Label text="Landmand (Fuld adgang)" style="-fx-font-weight: bold;"/>
-                <Label text="Brugernavn: Landmand  |  Kode: 1234"/>
+                <Label text="Brugernavn: Landmand  -  Kode: 1234"/>
             </VBox>
-            
+
             <VBox spacing="5" alignment="CENTER">
                 <Label text="Rådgiver (Read-only)" style="-fx-font-weight: bold;"/>
-                <Label text="Brugernavn: Rådgiver  |  Kode: 5678"/>
+                <Label text="Brugernavn: Rådgiver  -  Kode: 5678"/>
             </VBox>
         </VBox>
     </VBox>
