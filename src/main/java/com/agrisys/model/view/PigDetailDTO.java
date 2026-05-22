@@ -16,12 +16,14 @@ import java.time.LocalDate;
  * @param locationName  Current pen/location
  */
 public record PigDetailDTO(
-    String animalNumber,
-    String responderId,
-    Integer assignmentId,
-    LocalDate birthDate,
-    String status,
-    double currentWeight,
-    double fcr,
-    String locationName
+        String animalNumber,
+        String responderId,
+        Integer assignmentId,
+        java.time.LocalDate birthDate,
+        String status,
+        double currentWeight,
+        double fcr,
+        String locationName,
+        double startWeight,
+        double totalFeed
 ) {}
