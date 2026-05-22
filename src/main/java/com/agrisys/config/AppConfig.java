@@ -18,6 +18,7 @@ public final class AppConfig {
     public static final double MIN_HEIGHT = 768.0;
 
     // FXML Paths
+    public static final String LOGIN_VIEW = "login-view.fxml";
     public static final String MAIN_VIEW = "main-view.fxml";
     public static final String HOME_VIEW = "home-view.fxml";
     public static final String PIGS_VIEW = "pigs-view.fxml";

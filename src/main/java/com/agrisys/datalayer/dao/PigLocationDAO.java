@@ -82,6 +82,24 @@ public class PigLocationDAO {
     }
 
     /**
+     * Checks if a location has any active pigs (departed_at IS NULL).
+     *
+     * @param locationId The location ID to check.
+     * @return true if there is at least one active pig in the location.
+     * @throws SQLException if a database error occurs.
+     */
+    public boolean hasActivePigsInLocation(int locationId) throws SQLException {
+        String sql = "SELECT 1 FROM Pig_Location WHERE location_id = ? AND departed_at IS NULL";
+        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, locationId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next(); // True if at least one active pig exists
+            }
+        }
+    }
+
+    /**
      * Helper method to map a ResultSet row to a PigLocationRecord.
      */
     private PigLocationRecord map(ResultSet rs) throws SQLException {

@@ -1,7 +1,14 @@
 package com.agrisys.controller;
 
 import com.agrisys.DbConnect;
+import com.agrisys.AgrisysApplication;
+import com.agrisys.config.AppConfig;
+import com.agrisys.model.UserSession;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ButtonBar;
@@ -43,12 +50,16 @@ public class MainController {
     }
 
     @FXML
-    private void handleLogout() {
+    private void handleLogout(ActionEvent event) {
         try {
             Dialog<ButtonType> confirmLogout = loadDialog("logout-dialog.fxml");
             Optional<ButtonType> result = confirmLogout.showAndWait();
             if (result.isPresent() && result.get().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-                Platform.exit();
+                UserSession.getInstance().logout();
+                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                FXMLLoader fxmlLoader = new FXMLLoader(AgrisysApplication.class.getResource(AppConfig.LOGIN_VIEW));
+                Scene scene = new Scene(fxmlLoader.load(), AppConfig.MIN_WIDTH, AppConfig.MIN_HEIGHT);
+                stage.setScene(scene);
             }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Kunne ikke indlæse log ud-dialog.", e);

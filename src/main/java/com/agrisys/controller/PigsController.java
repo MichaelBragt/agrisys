@@ -9,6 +9,7 @@ import com.agrisys.model.view.PigSummary;
 import com.agrisys.service.ChartService;
 import com.agrisys.service.LocationService;
 import com.agrisys.service.PigService;
+import com.agrisys.model.UserSession;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -19,6 +20,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -44,6 +46,7 @@ public class PigsController {
     @FXML private TableColumn<PigSummary, Double> colFCR;
 
     @FXML private ComboBox<LocationRecord> locationSelector; 
+    @FXML private Button btnRegisterPig;
 
     // De to containere i højre side
     @FXML private StackPane chartContainer;
@@ -256,7 +259,46 @@ public class PigsController {
             refreshPigData(selectedLocation != null ? selectedLocation.locationId() : null);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            UIErrorReport.showDatabaseError(e);
+        }
+    }
+
+    @FXML
+    private void handleOpenLocations() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/agrisys/locations-dialog.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = new Stage();
+            stage.setTitle("Håndter Lokationer");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(pigTable.getScene().getWindow());
+            stage.setScene(new Scene(root, 700, 500));
+
+            stage.showAndWait();
+
+            // Refresh the locations dropdown after closing the dialog
+            loadLocations();
+            // Reselect the previously selected location if it still exists
+            LocationRecord selectedLocation = locationSelector.getSelectionModel().getSelectedItem();
+            if (selectedLocation != null) {
+                boolean found = false;
+                for (LocationRecord loc : locationSelector.getItems()) {
+                    if (loc.locationId() == selectedLocation.locationId()) {
+                        locationSelector.getSelectionModel().select(loc);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    locationSelector.getSelectionModel().selectFirst();
+                }
+            } else {
+                locationSelector.getSelectionModel().selectFirst();
+            }
+
+        } catch (IOException e) {
+            UIErrorReport.showDatabaseError(e);
         }
     }
 
