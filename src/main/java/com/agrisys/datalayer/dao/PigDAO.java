@@ -281,7 +281,9 @@ public class PigDAO {
                             rs.getString("status"),
                             weightInKg,
                             fcr,
-                            rs.getString("location_name")
+                            rs.getString("location_name"),
+                            rawStartWeight,
+                            totalFeed
                     ));
                 }
             }

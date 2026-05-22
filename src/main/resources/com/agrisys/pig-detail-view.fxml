@@ -11,28 +11,34 @@
         <!-- Venstre: Info boks & Redigering -->
         <VBox spacing="15" prefWidth="350" styleClass="sidebar-container">
             <Label text="Gris Detaljer" styleClass="header-label"/>
-            
+
             <GridPane hgap="10" vgap="12">
                 <Label text="Dyre Nr:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
                 <Label fx:id="lblAnimalNumber" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-                
+
                 <Label text="Responder ID:" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
                 <HBox spacing="5" GridPane.rowIndex="1" GridPane.columnIndex="1" alignment="CENTER_LEFT">
                     <Label fx:id="lblResponderId" />
                     <Button fx:id="btnRemoveResponder" text="Fjern" onAction="#handleRemoveResponder" style="-fx-font-size: 10px;"/>
                 </HBox>
-                
+
                 <Label text="Lokation:" GridPane.rowIndex="2" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
                 <Label fx:id="lblLocation" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-                
+
                 <Label text="Fødselsdato:" GridPane.rowIndex="3" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
                 <DatePicker fx:id="dpBirthDate" disable="true" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-                
+
                 <Label text="Status:" GridPane.rowIndex="4" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
                 <ComboBox fx:id="cbStatus" disable="true" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
-                
+
                 <Label text="Aktuel Vægt:" GridPane.rowIndex="5" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
                 <Label fx:id="lblWeight" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+                <Label text="Total Vækst:" GridPane.rowIndex="6" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblWeightGained" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+                <Label text="Total Foder:" GridPane.rowIndex="7" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblTotalFeed" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
             </GridPane>
             
             <Separator/>
