@@ -56,13 +56,28 @@
 
             <VBox spacing="8" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 12; -fx-background-radius: 8; -fx-border-color: #e9ecef; -fx-border-radius: 8;">
                 <HBox alignment="CENTER_LEFT">
-                    <Label text="Biologiske Alarmer &amp; Kritiske Grise (Overvågning)" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #d32f2f;"/>
+                    <Label text="Kritiske hændelser og Biologiske alarmer" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #d32f2f;"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Label text="FCR &gt; 2.80 eller Status 'Syg'" style="-fx-font-size: 11px; -fx-text-fill: #d32f2f; -fx-background-color: #fdecea; -fx-padding: 2 6; -fx-background-radius: 3; -fx-font-weight: bold;"/>
                 </HBox>
 
-                <TableView fx:id="riskTable" VBox.vgrow="ALWAYS">
-                </TableView>
+                <VBox spacing="8" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 12; -fx-background-radius: 8; -fx-border-color: #e9ecef; -fx-border-radius: 8;">
+                    <HBox alignment="CENTER_LEFT">
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="Kræver handling i stalden" style="-fx-font-size: 11px; -fx-text-fill: #7f8c8d; -fx-background-color: #f1f2f6; -fx-padding: 2 6; -fx-background-radius: 3;"/>
+                    </HBox>
+
+                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" VBox.vgrow="ALWAYS" style="-fx-background: white; -fx-background-color: transparent; -fx-border-color: transparent;">
+                        <content>
+                            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" VBox.vgrow="ALWAYS" style="-fx-background: white; -fx-background-color: transparent; -fx-border-color: transparent;">
+                                <content>
+                                    <FlowPane fx:id="alertContainer" hgap="12" vgap="12" style="-fx-padding: 5 5 5 5;">
+                                    </FlowPane>
+                                </content>
+                            </ScrollPane>
+                        </content>
+                    </ScrollPane>
+                </VBox>
             </VBox>
         </VBox>
 

@@ -74,51 +74,73 @@ public class Gauge extends StackPane {
     /**
      * Oppdaterer gaugen dynamisk basert på en biologisk FCR-verdi (typisk 1.5 til 4.5)
      */
+    /**
+     * Updates the gauge dynamically based on a biological FCR value.
+     * Provides a 5-tier classification system with fluent color fading.
+     * * @param fcr The calculated Feed Conversion Ratio (typically 1.5 to 4.5).
+     */
     public void setFcrValue(double fcr) {
         if (fcr <= 0) {
             valueText.setText("N/A");
             statusLabel.setText("INGEN DATA");
             statusArc.setLength(0);
             statusArc.setStroke(Color.GRAY);
+            statusLabel.setFill(Color.GRAY);
             return;
         }
 
-        // 1. Vis verdien med 2 desimaler i midten
+        // 1. Display the formatted raw value in the center
         valueText.setText(String.format("%.2f", fcr));
         statusLabel.setTextAlignment(TextAlignment.CENTER);
 
-        // 2. Map FCR-verdien til en prosentbue (1.5 er "perfekt/full", 4.5 er "kritisk/tom")
-        // Vi klamper verdien mellom 1.5 og 4.5 så buen ikke går amok
+        // 2. Map FCR to arc length (1.5 is perfect/full arc, 4.5 is critical/empty arc)
         double clampedFcr = Math.max(1.5, Math.min(4.5, fcr));
-
-        // Beregn en faktor fra 0.0 (dårligst) til 1.0 (best)
         double goodnessFactor = (4.5 - clampedFcr) / (4.5 - 1.5);
-
-        // Gjør faktoren om til grader på sirkelen (fra 0 til -360 grader)
         double targetLength = -goodnessFactor * 360.0;
         statusArc.setLength(targetLength);
 
-        // 3. DYNAMISK FARGE-FADE (Interpolation)
-        Color godFcrFarge = Color.web("#34C759"); // Grønn
-        Color middelsFcrFarge = Color.web("#FFCC00"); // Gul
-        Color daarligFcrFarge = Color.web("#FF3B30"); // Rød
+        // 3. Define professional color anchors for the interpolation
+        Color colorExcellent = Color.web("#107C41"); // Mørkegrøn (Elite performance)
+        Color colorGood = Color.web("#34C759");      // Lysegrøn (Optimal standard)
+        Color colorAverage = Color.web("#FFCC00");   // Gul (Gennemsnitlig / Hold øje)
+        Color colorWarning = Color.web("#FF9500");   // Orange (Forhøjet foderudgift)
+        Color colorCritical = Color.web("#FF3B30");  // Rød (Kritisk tab / Sygdomstegn)
 
-        Color dynamiskFarge;
+        Color dynamicColor;
 
-        if (goodnessFactor > 0.5) {
-            // Fade mellom Gul (0.5) og Grønn (1.0)
-            double t = (goodnessFactor - 0.5) * 2.0;
-            dynamiskFarge = middelsFcrFarge.interpolate(godFcrFarge, t);
+        // 4. Multi-stage color fading and expanded biological wording
+        if (fcr < 2.20) {
+            // Excellent: From 1.5 to 2.20 (Fade between Excellent and Good)
+            double t = (2.20 - fcr) / (2.20 - 1.5);
+            dynamicColor = colorGood.interpolate(colorExcellent, Math.max(0, Math.min(1, t)));
+            statusLabel.setText("FCR\nEXCELLENT");
+        }
+        else if (fcr < 2.50) {
+            // Good: From 2.20 to 2.50 (Fade between Good and Average)
+            double t = (2.50 - fcr) / (2.50 - 2.20);
+            dynamicColor = colorAverage.interpolate(colorGood, Math.max(0, Math.min(1, t)));
             statusLabel.setText("FCR\nOPTIMAL");
-        } else {
-            // Fade mellom Rød (0.0) og Gul (0.5)
-            double t = goodnessFactor * 2.0;
-            dynamiskFarge = daarligFcrFarge.interpolate(middelsFcrFarge, t);
+        }
+        else if (fcr < 2.80) {
+            // Average: From 2.50 to 2.80 (Fade between Average and Warning)
+            double t = (2.80 - fcr) / (2.80 - 2.50);
+            dynamicColor = colorWarning.interpolate(colorAverage, Math.max(0, Math.min(1, t)));
+            statusLabel.setText("FCR\nACCEPTABEL");
+        }
+        else if (fcr < 3.20) {
+            // Warning: From 2.80 to 3.20 (Fade between Warning and Critical)
+            double t = (3.20 - fcr) / (3.20 - 2.80);
+            dynamicColor = colorCritical.interpolate(colorWarning, Math.max(0, Math.min(1, t)));
+            statusLabel.setText("FCR\nFORHØJET");
+        }
+        else {
+            // Critical: 3.20 and above (Solid Critical Red)
+            dynamicColor = colorCritical;
             statusLabel.setText("FCR\nKRITISK");
         }
 
-        // Push fargen til både buen og tekst-labelen
-        statusArc.setStroke(dynamiskFarge);
-        statusLabel.setFill(dynamiskFarge);
+        // 5. Apply the synchronized color to both the arc and the label
+        statusArc.setStroke(dynamicColor);
+        statusLabel.setFill(dynamicColor);
     }
 }
