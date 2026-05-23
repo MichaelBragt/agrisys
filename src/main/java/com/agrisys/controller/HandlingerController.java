@@ -1,15 +1,20 @@
 package com.agrisys.controller;
 
+import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.datalayer.dao.PigDAO;
+import com.agrisys.dto.excel.ExcelImportDTO;
 import com.agrisys.model.view.PigSummary;
 import com.agrisys.service.CsvExportService;
+import com.agrisys.service.ExcelDataToDatabaseService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -27,9 +32,14 @@ public class HandlingerController {
     private TextField filterMaxWeightField;
     @FXML
     private TextField filterFcrField;
+    @FXML    private Button btnRegisterPig;        // Sørg for at disse fx:id matcher jeres handlinger FXML!
+    @FXML    private Button btnRegisterLocation;
+    @FXML    private Button btnImportData;
 
     private final CsvExportService csvExportService = new CsvExportService();
     private final PigDAO pigDAO = new PigDAO();
+    private final com.agrisys.service.ExcelParserService parserService = new com.agrisys.service.ExcelParserService();
+    private final com.agrisys.service.ExcelDataToDatabaseService excelDataToDatabaseService = new com.agrisys.service.ExcelDataToDatabaseService();
 
     // Master-listen med alle 24+ grise fra databasen
     private final ObservableList<PigSummary> masterPigList = FXCollections.observableArrayList();
@@ -90,7 +100,36 @@ public class HandlingerController {
         });
 
         filterFcrField.textProperty().addListener((obs, oldVal, newVal) -> updateFilters());
+
+        // =========================================================================
+        // SIKKER ADGANGSSTYRING FOR RÅDGIVER (Placeret i bunden af initialize)
+        // =========================================================================
+        if (com.agrisys.model.UserSession.getInstance().isRaadgiver()) {
+
+            // 1. Skjul staldstyrings-knapperne (De eksisterende tjek)
+            if (btnRegisterPig != null) { // Bemærk: Ret navnet hvis den hedder btnRegistrerNyGris i din Java-kode
+                btnRegisterPig.setVisible(false);
+                btnRegisterPig.setManaged(false);
+            }
+            if (btnRegisterLocation != null) { // Bemærk: Ret navnet hvis den hedder btnAdministrerLokationer i din Java-kode
+                btnRegisterLocation.setVisible(false);
+                btnRegisterLocation.setManaged(false);
+            }
+
+            // 2. NYT: Skjul den nye importknap for rådgiveren!
+            if (btnImportData != null) {
+                btnImportData.setVisible(false);
+                btnImportData.setManaged(false);
+                System.out.println("LOG -> Rådgiver identificeret: 'Importer nye målinger' er skjult.");
+            } else {
+                System.err.println("ADVARSEL: fx:id='btnImportData' blev ikke fundet i controlleren!");
+            }
+
+            System.out.println("LOG -> Alle kritiske landmands-værktøjer er blevet skjult for rådgiveren.");
+        }
+
     }
+
 
     /**
      * Kernen i filtreringen: Evaluerer hver enkelt gris mod landmandens indtastede værdier.
@@ -265,6 +304,47 @@ public class HandlingerController {
 
         } catch (java.io.IOException e) {
             com.agrisys.Utils.UIErrorReport.showDatabaseError(e);
+        }
+    }
+
+    @FXML
+    private void handleImportAction() { // Kaldes fra fx:onAction="#handleImportCsv" i FXML
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Vælg Excel fil");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Excel Files", "*.xlsx")
+        );
+
+        // RETTET: Vi bruger jeres nye knap 'btnImportData' til at finde vinduet
+        File selectedFile = fileChooser.showOpenDialog(btnImportData.getScene().getWindow());
+
+        if (selectedFile != null) {
+            try {
+                List<ExcelImportDTO> rawData = parserService.parseExcel(selectedFile);
+                ExcelDataToDatabaseService.ImportResult resultat = excelDataToDatabaseService.processImport(rawData);
+
+                System.out.println("Successfully processed file. Inserted: " + resultat.insertedCount() + ", Skipped: " + resultat.skippedCount());
+                System.out.println("Successfully parsed " + rawData.size() + " rows.");
+
+                // RETTET HERTIL: I stedet for at opdatere dashboard-grafen,
+                // genindlæser vi nu tabellen med grise på Handlinger-fanen live!
+                loadPigData();
+
+                String msgText = String.format(
+                        "%d nye målinger blev synkroniseret.\n%d målinger blev udeladt, da de allerede eksisterede i databasen.",
+                        resultat.insertedCount(),
+                        resultat.skippedCount()
+                );
+
+                UIErrorReport.showAlert(
+                        "Import færdig",
+                        "Data er indlæst i databasen",
+                        msgText
+                );
+
+            } catch (Exception e) {
+                UIErrorReport.showDatabaseError(e);
+            }
         }
     }
 }

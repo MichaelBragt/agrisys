@@ -54,33 +54,25 @@ public class LoginController {
         }
 
         try {
-            // Check in database
-            Optional<AppUserRecord> userOpt = appUserDAO.findByUsername(username);
-            
-            if (userOpt.isPresent()) {
-                AppUserRecord user = userOpt.get();
-                // In a real application, compare hashes. Here we assume simple string match for test accounts.
-                // We'll also allow fallback if the DB is empty but we want to test UI.
-                if (user.password().equals(password)) {
-                    performLogin(user);
-                    return;
-                }
-            } else {
-                // FALLBACK for testing if the database isn't populated with these specific users yet.
-                if ("Landmand".equals(username) && "1234".equals(password)) {
-                    performLogin(new AppUserRecord(-1, "Landmand", "1234", "Landmand"));
-                    return;
-                } else if ("Rådgiver".equals(username) && "5678".equals(password)) {
-                    performLogin(new AppUserRecord(-2, "Rådgiver", "5678", "Rådgiver"));
+            // Kalder vores nye, sikre validering, der klarer SHA-256 tjekket live i DB
+            Optional<AppUserDAO.UserResult> loginResult = appUserDAO.validateLogin(username, password);
+
+            if (loginResult.isPresent()) {
+                // Siden login er godkendt, henter vi den fulde AppUserRecord til jeres UserSession
+                Optional<AppUserRecord> userOpt = appUserDAO.findByUsername(username);
+                if (userOpt.isPresent()) {
+                    performLogin(userOpt.get());
                     return;
                 }
             }
+
+            // Alt fallback er fjernet! Hvis det ikke matcher databasens hashes, afvises man med det samme.
             errorLabel.setText("Forkert brugernavn eller adgangskode.");
 
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error during login", e);
             errorLabel.setText("Fejl ved forbindelse til database.");
-        }
+            }
     }
     
     @FXML

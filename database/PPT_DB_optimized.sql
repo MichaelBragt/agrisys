@@ -94,6 +94,25 @@ BEGIN TRY
     CREATE INDEX IX_Pig_Location_Current ON Pig_Location(animal_number, location_id)
     WHERE departed_at IS NULL;
 
+    -- =========================================================================
+    -- INDSÆT TESTBRUGERE MED SHA-256 HASHING
+    -- =========================================================================
+    PRINT 'Indsætter pre-hashed testbrugere...';
+
+    INSERT INTO AppUser (username, password, user_role) VALUES 
+    (
+        'Landmand', 
+        LOWER(sys.fn_varbintohexstr(HASHBYTES('SHA2_256', '1234'))), 
+        'Landmand'
+    ),
+    (
+        'Rådgiver', 
+        LOWER(sys.fn_varbintohexstr(HASHBYTES('SHA2_256', '5678'))), 
+        'Raadgiver' -- Matcher CHECK (user_role IN ('Landmand', 'Raadgiver'))
+    );
+    
+    -- =========================================================================
+
     -- Hvis vi når hertil uden fejl, gemmes alle ændringer
     COMMIT TRANSACTION;
     PRINT 'Database-struktur oprettet succesfuldt via transaction.';
@@ -110,4 +129,31 @@ BEGIN CATCH
         ERROR_MESSAGE() AS ErrorMessage,
         ERROR_LINE() AS ErrorLine;
 END CATCH;
+GO
+
+-- =========================================================================
+-- 4. OPRETTELSE AF DEDIKERET APP-BRUGER OG DB_OWNER RETTIGHEDER
+-- =========================================================================
+USE agrisys_ppt;
+GO
+
+-- A. Opret login på selve SQL Serveren (hvis det ikke allerede findes)
+IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'agrisysUser')
+BEGIN
+    CREATE LOGIN agrisysUser WITH PASSWORD = 'agrisysUser', DEFAULT_DATABASE = agrisys_ppt;
+    PRINT 'Server Login agrisysUser oprettet.';
+END
+GO
+
+-- B. Opret brugeren i denne specifikke database knyttet til loginnet
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'agrisysUser')
+BEGIN
+    CREATE USER agrisysUser FOR LOGIN agrisysUser;
+    PRINT 'Database User agrisysUser oprettet i agrisys_ppt.';
+END
+GO
+
+-- C. Giv brugeren db_owner rollen, så applikationen kan læse/skrive alt i denne DB
+ALTER ROLE db_owner ADD MEMBER agrisysUser;
+PRINT 'agrisysUser er nu tildelt db_owner rettigheder.';
 GO

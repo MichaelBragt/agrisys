@@ -38,7 +38,13 @@
             <Label text="Data Værktøjer" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: -agri-primary; -fx-padding: 10 0 0 0;"/>
             <Separator/>
 
-            <MenuButton text="Eksporter til CSV" maxWidth="Infinity" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5;">
+            <Button fx:id="btnImportData" text="Importer nye målinger" onAction="#handleImportAction"
+                    maxWidth="Infinity" prefHeight="38" style="-fx-background-color: -agri-primary; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;">
+            </Button>
+            <Separator/>
+
+            <MenuButton text="Eksporter til CSV" maxWidth="Infinity" prefHeight="38"
+                        style="-fx-background-color: -agri-primary; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;">
                 <items>
                     <MenuItem text="Eksporter nuværende filter / visning" onAction="#handleExportAllCsv"/>
                     <MenuItem text="Nuværende lokation/sti" onAction="#handleExportLocationCsv"/>
@@ -49,11 +55,11 @@
             <Label text="Stald Styring" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: -agri-primary; -fx-padding: 10 0 0 0;"/>
             <Separator/>
 
-            <Button text="Registrer ny gris" onAction="#handleOpenPigRegistration" maxWidth="Infinity"
-                    style="-fx-background-color: -agri-primary; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5;"/>
+            <Button fx:id="btnRegisterPig" text="Registrer ny gris" onAction="#handleOpenPigRegistration"
+                    maxWidth="Infinity" prefHeight="38" style="-fx-background-color: -agri-primary; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;"/>
 
-            <Button text="Administrer lokationer" onAction="#handleOpenLocations" maxWidth="Infinity"
-                    style="-fx-background-color: white; -fx-border-color: -agri-primary; -fx-border-width: 1; -fx-text-fill: -agri-primary; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-border-radius: 5;"/>
+            <Button fx:id="btnRegisterLocation" text="Administrer lokationer" onAction="#handleOpenLocations"
+                    maxWidth="Infinity" prefHeight="38" style="-fx-background-color: -agri-primary; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;"/>
         </VBox>
 
         <VBox spacing="10" HBox.hgrow="ALWAYS">

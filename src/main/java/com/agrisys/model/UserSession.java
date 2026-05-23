@@ -31,7 +31,11 @@ public class UserSession {
     }
 
     public boolean isRaadgiver() {
-        return currentUser != null && "Rådgiver".equalsIgnoreCase(currentUser.userRole());
+        if (currentUser == null) return false;
+
+        // Vi tjekker mod både 'Raadgiver' og 'Rådgiver', så vi er 100% skudsikre
+        String role = currentUser.userRole(); // eller hvad Michaels felt hedder i AppUserRecord
+        return "Raadgiver".equalsIgnoreCase(role) || "Rådgiver".equalsIgnoreCase(role);
     }
 
     public void logout() {

@@ -8,12 +8,10 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
 
 import java.io.IOException;
 import java.net.URL;
@@ -42,8 +40,37 @@ public class MainController {
     @FXML
     private void handleProfile() {
         try {
+            // 1. Indlæs dialogen via jeres eksisterende loadDialog metode
             Dialog<ButtonType> profileDialog = loadDialog("profile-dialog.fxml");
+
+            // 2. Hent dialogens underliggende DialogPane
+            DialogPane dialogPane = profileDialog.getDialogPane();
+
+            // 3. Slå jeres to labels op via deres CSS/FXML-id (#navn)
+            Label lblUsername = (Label) dialogPane.lookup("#lblProfileUsername");
+            Label lblRole = (Label) dialogPane.lookup("#lblProfileRole");
+
+            // 4. Hent den aktive bruger fra jeres skudsikre UserSession
+            var session = com.agrisys.model.UserSession.getInstance();
+            var currentUser = session.getCurrentUser();
+
+            if (currentUser != null) {
+                // Sæt brugernavnet live (fx "Landmand" eller "Rådgiver")
+                if (lblUsername != null) {
+                    lblUsername.setText(currentUser.username());
+                }
+
+                // Sæt rollen live
+                if (lblRole != null) {
+                    lblRole.setText(currentUser.userRole());
+                }
+            } else {
+                if (lblUsername != null) lblUsername.setText("Ingen aktiv session");
+            }
+
+            // 5. Vis dialogen til brugeren
             profileDialog.showAndWait();
+
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Kunne ikke indlæse profildialog.", e);
         }
