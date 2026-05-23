@@ -102,7 +102,8 @@ public class PigDAO {
             p.birth_date,
             latest_meas.pig_weight AS latest_weight,
             earliest_meas.pig_weight AS start_weight,
-            (SELECT SUM(pd2.feed_intake) FROM PPT_Data pd2 WHERE pd2.assignment_id = ra.assignment_id) AS total_feed
+            (SELECT SUM(pd2.feed_intake) FROM PPT_Data pd2 WHERE pd2.assignment_id = ra.assignment_id) AS total_feed,
+            p.status
         FROM Pig p
         LEFT JOIN Responder_Assignment ra ON p.animal_number = ra.animal_number AND ra.date_removed IS NULL
         LEFT JOIN Pig_Location pl ON p.animal_number = pl.animal_number AND pl.departed_at IS NULL
@@ -118,7 +119,7 @@ public class PigDAO {
             WHERE pd3.assignment_id = ra.assignment_id AND pd3.pig_weight > 0
             ORDER BY pd3.visit_time ASC
         ) AS earliest_meas
-        WHERE p.status = 'Aktiv'
+        WHERE p.status IN ('Aktiv', 'Syg')
         """;
 
         try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
@@ -126,8 +127,10 @@ public class PigDAO {
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-
                 Date birth = rs.getDate("birth_date");
+
+                // RETTET: Trækker status ud af ResultSet, så den eksisterer som variabel
+                String status = rs.getString("status");
 
                 double rawLatestWeight = rs.getDouble("latest_weight");
                 double rawStartWeight = rs.getDouble("start_weight");
@@ -152,7 +155,8 @@ public class PigDAO {
                         rs.getObject("location_id") != null ? rs.getInt("location_id") : null,
                         birth != null ? birth.toLocalDate() : null,
                         weightInKg,
-                        fcr
+                        fcr,
+                        status // Afleveres korrekt nu!
                 ));
             }
         }
@@ -172,7 +176,8 @@ public class PigDAO {
                 p.birth_date,
                 latest_meas.pig_weight AS latest_weight,
                 earliest_meas.pig_weight AS start_weight,
-                (SELECT SUM(pd2.feed_intake) FROM PPT_Data pd2 WHERE pd2.assignment_id = ra.assignment_id) AS total_feed
+                (SELECT SUM(pd2.feed_intake) FROM PPT_Data pd2 WHERE pd2.assignment_id = ra.assignment_id) AS total_feed,
+                p.status
             FROM Pig p
             INNER JOIN Pig_Location pl ON p.animal_number = pl.animal_number AND pl.departed_at IS NULL
             LEFT JOIN Responder_Assignment ra ON p.animal_number = ra.animal_number AND ra.date_removed IS NULL
@@ -188,7 +193,7 @@ public class PigDAO {
                 WHERE pd3.assignment_id = ra.assignment_id AND pd3.pig_weight > 0
                 ORDER BY pd3.visit_time ASC
             ) AS earliest_meas
-            WHERE p.status = 'Aktiv' AND pl.location_id = ?
+            WHERE p.status IN ('Aktiv', 'Syg') AND pl.location_id = ?
             """;
 
         try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
@@ -197,6 +202,9 @@ public class PigDAO {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     Date birth = rs.getDate("birth_date");
+
+                    // RETTET: Trækker status ud for lokations-søgningen også
+                    String status = rs.getString("status");
 
                     double rawLatestWeight = rs.getDouble("latest_weight");
                     double rawStartWeight = rs.getDouble("start_weight");
@@ -220,8 +228,9 @@ public class PigDAO {
                             rs.getString("responder_id"),
                             rs.getInt("location_id"),
                             birth != null ? birth.toLocalDate() : null,
-                            weightInKg, // Sender værdien med som korrekte KG!
-                            fcr         // FCR beregnes nu korrekt i stedet for null!
+                            weightInKg,
+                            fcr,
+                            status // RETTET: Tilføjet som 7. parameter
                     ));
                 }
             }
