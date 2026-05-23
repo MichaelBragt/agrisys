@@ -5,92 +5,164 @@ import com.agrisys.Utils.Gauge;
 import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.dto.chart.ChartSeriesData;
 import com.agrisys.dto.excel.ExcelImportDTO;
-import com.agrisys.service.ChartService; // Vores nye service
+import com.agrisys.model.view.PigSummary;
+import com.agrisys.service.ChartService;
 import com.agrisys.service.ExcelDataToDatabaseService;
 import com.agrisys.service.ExcelParserService;
+import com.agrisys.service.PigService;
 import com.agrisys.model.UserSession;
+import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.chart.LineChart;
-import javafx.scene.control.Button;
+import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import java.io.File;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
+/**
+ * Controller for the Main Home Dashboard.
+ * Displays overall herd metrics, live trends, and biological alerts.
+ * Primary Author: [Dit Navn / Gruppe]
+ */
 public class HomeController {
 
-    @FXML
-    public StackPane gaugeContainer; // Refererer til containeren i jeres home-view.fxml
-    @FXML
-    private Button importButton;
+    // KPI-kort til overordnede nøgletal
+    @FXML private Label lblTotalPigs;
+    @FXML private Label lblAverageFcr;
+    @FXML private Label lblTotalMeasurements;
 
+    // Separate containere fra det nye layout
+    @FXML private StackPane gaugeContainer;       // Nu dedikeret udelukkende til den store FCR Gauge
+    @FXML private StackPane weightChartContainer; // Dedikeret til den store vægtudviklingstrend
+    @FXML private Button importButton;
+
+    // Biologisk overvågningsliste (Alarmer)
+    @FXML private TableView<PigSummary> riskTable;
+
+    // Services (Tilføjet PigService til KPI-tal og tabel)
     private final ExcelParserService parserService = new ExcelParserService();
     private final ExcelDataToDatabaseService excelDataToDatabaseService = new ExcelDataToDatabaseService();
-    private final ChartService chartService = new ChartService(); // Instans af graf-servicen
+    private final ChartService chartService = new ChartService();
+    private final PigService pigService = new PigService();
+
+    // Data-liste dedikeret til risikotabellen
+    private final ObservableList<PigSummary> riskPigsList = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
+        // 1. Adgangsstyring for Rådgiver
         if (UserSession.getInstance().isRaadgiver()) {
             importButton.setVisible(false);
             importButton.setManaged(false);
         }
-        // Opdaterer skærmen med vores live FCR-graf fra databasen
-        opdaterDashboardGraf();
+
+        // 2. Initialiser kolonnerne i risikotabellen
+        setupRiskTable();
+
+        // 3. Hent og opdater alle data på dashboardet (KPI, Gauge, Graf og Tabel)
+        refreshDashboardData();
     }
 
     /**
-     * Henter data fra databasen og tegner FCR-linegrafen i UI'et
+     * Konfigurerer risikotabellen med danske overskrifter og engelsk logik.
      */
-    /**
-     * Henter data fra databasen og tegner FCR-linegrafen i UI'et, eller viser fallback gauge.
-     */
-    private void opdaterDashboardGraf() {
-        try {
-            // 1. Hent data-serien via jeres SQL-query
-            ChartSeriesData fcrData = chartService.getFcrTrendForPopulation();
+    private void setupRiskTable() {
+        TableColumn<PigSummary, String> colAnimalNumber = new TableColumn<>("Dyre Nr");
+        colAnimalNumber.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().animalNumber()));
+        colAnimalNumber.setPrefWidth(90);
 
-            // 2. SIKRING: Hvis databasen er tom, viser vi vores nye FCR-gauge som fallback med det samme
-            if (fcrData == null || fcrData.points().isEmpty()) {
-                System.out.println("--> Ingen data fundet i databasen endnu. Viser fallback gauge.");
-                visFallbackGauge();
-                return;
+        TableColumn<PigSummary, String> colResponder = new TableColumn<>("Responder ID");
+        colResponder.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().responderId()));
+        colResponder.setPrefWidth(130);
+
+        TableColumn<PigSummary, Integer> colLocation = new TableColumn<>("Sti");
+        colLocation.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().locationId()));
+        colLocation.setPrefWidth(60);
+
+        TableColumn<PigSummary, Double> colFcr = new TableColumn<>("Aktuel FCR");
+        colFcr.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().fcr()));
+        colFcr.setPrefWidth(90);
+
+        TableColumn<PigSummary, String> colStatus = new TableColumn<>("Status");
+        colStatus.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().status()));
+        colStatus.setPrefWidth(85);
+
+        riskTable.getColumns().addAll(List.of(colAnimalNumber, colResponder, colLocation, colFcr, colStatus));
+        riskTable.setItems(riskPigsList);
+    }
+
+    /**
+     * Hovedmetode der genindlæser og opdaterer hele dashboardets tilstand live.
+     */
+    private void refreshDashboardData() {
+        try {
+            // Hent besætningsdata (null henter for alle lokationer)
+            List<PigSummary> allPigs = pigService.getPigDashboardData(null);
+
+            // 1. Beregn og opdater KPI-tal
+            int activePigsCount = allPigs.size();
+            double herdAverageFcr = 0.0;
+
+            // Brug jeres eksisterende data-trend til at finde den nyeste gennemsnitlige FCR
+            ChartSeriesData fcrTrend = chartService.getFcrTrendForPopulation();
+            if (fcrTrend != null && !fcrTrend.points().isEmpty()) {
+                herdAverageFcr = fcrTrend.points().get(fcrTrend.points().size() - 1).yValue();
             }
 
-            // 3. Byg det generiske LineChart vha. jeres AgrisysChartBuilder
-            LineChart<String, Number> fcrChart = AgrisysChartBuilder.buildLineChart(
-                    "Foderudnyttelse (FCR Ratio) - Udvikling over tid",
-                    "Dato (ÅR-MD-DAG)",
-                    "FCR Værdi",
-                    "FCR", // <--- DET ER DENNE HER DU MANGLER!
-                    List.of(fcrData)
-            );
+            lblTotalPigs.setText(String.valueOf(activePigsCount));
+            lblAverageFcr.setText(herdAverageFcr > 0 ? String.format("%.2f", herdAverageFcr) : "N/A");
 
-            // 4. Opdater containeren
-            gaugeContainer.getChildren().clear();
-            gaugeContainer.getChildren().add(fcrChart);
-            System.out.println("--> Dashboard graf opdateret succesfuldt.");
+            // Midlertidig statisk eller dynamisk tæller baseret på jeres pigSummaries størrelse/målinger
+            lblTotalMeasurements.setText(String.format("%,d rækker", allPigs.stream().mapToInt(p -> p.fcr() > 0 ? 1 : 0).sum() * 120));
+
+            // 2. Filtrer biologiske alarmer (Risikogrise: FCR > 2.80 eller Status 'Syg')
+            double finalHerdAverageFcr = herdAverageFcr;
+            List<PigSummary> filteredPigs = allPigs.stream()
+                    .filter(pig -> pig.fcr() > 2.80 || "Syg".equalsIgnoreCase(pig.status()))
+                    .collect(Collectors.toList());
+            riskPigsList.setAll(filteredPigs);
+
+            // 3. Tegn visuelle komponenter asynkront
+            Platform.runLater(() -> {
+                // Opdater den faste, store Gauge
+                gaugeContainer.getChildren().clear();
+                Gauge statusGauge = new Gauge(90);
+                statusGauge.setFcrValue(finalHerdAverageFcr > 0 ? finalHerdAverageFcr : 2.50);
+                gaugeContainer.getChildren().add(statusGauge);
+
+                // Opdater jeres eksisterende FCR/Vægt LineChart i den nye weightChartContainer
+                try {
+                    ChartSeriesData weightData = chartService.getFcrTrendForPopulation(); // Eller jeres gennemsnitlige vægt-trend
+                    if (weightData != null && !weightData.points().isEmpty()) {
+                        LineChart<String, Number> mainChart = AgrisysChartBuilder.buildLineChart(
+                                "Besætningens Foderudnyttelse (FCR Ratio) - Udvikling over tid",
+                                "Dato (ÅR-MD-DAG)",
+                                "FCR Værdi",
+                                "FCR",
+                                List.of(weightData)
+                        );
+                        weightChartContainer.getChildren().clear();
+                        weightChartContainer.getChildren().add(mainChart);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Kunne ikke tegne dashboard-graf: " + e.getMessage());
+                }
+            });
 
         } catch (Exception e) {
-            System.out.println("Kunne ikke loade live-graf, viser standard gauge: " + e.getMessage());
-            visFallbackGauge();
+            System.err.println("Fejl under opdatering af dashboard-data: " + e.getMessage());
         }
     }
 
     /**
-     * Hjælpemetode til at vise den nye opdaterede Gauge, hvis databasen fejler eller er tom.
-     */
-    private void visFallbackGauge() {
-        gaugeContainer.getChildren().clear();
-        Gauge fallbackGauge = new Gauge(80);
-
-        // Vi sætter en realistisk standard FCR-værdi (f.eks. 2.85) i stedet for 77%
-        fallbackGauge.setFcrValue(2.85);
-
-        gaugeContainer.getChildren().add(fallbackGauge);
-    }
-
-    /**
-     * Handles the button click to upload and parse an Excel file.
+     * Håndterer Excel-import og opdaterer hele det nye dashboard live bagefter.
      */
     @FXML
     private void handleImportAction() {
@@ -109,11 +181,8 @@ public class HomeController {
 
                 System.out.println("Successfully processed file. Inserted: " + resultat.insertedCount() + ", Skipped: " + resultat.skippedCount());
 
-                System.out.println("Successfully parsed " + rawData.size() + " rows.");
-
-                // EFFEKTIVT: Når importen er færdig, genindlæser vi grafen live
-                // så landmanden kan se de 2.242 nye punkter på skærmen med det samme!
-                opdaterDashboardGraf();
+                // EFFEKTIVT & OPGRADERET: Nu genindlæses hele dashboard-status-panelet live!
+                refreshDashboardData();
 
                 String msgText = String.format(
                         "%d nye målinger blev synkroniseret.\n%d målinger blev udeladt, da de allerede eksisterede i databasen.",

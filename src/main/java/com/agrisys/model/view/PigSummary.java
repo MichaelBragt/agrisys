@@ -19,5 +19,6 @@ public record PigSummary(
     Integer locationId,
     LocalDate birthDate,
     Double currentWeight,
-    Double fcr
+    Double fcr,
+    String status
 ) {}

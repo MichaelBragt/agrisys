@@ -1,23 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<?import javafx.scene.layout.StackPane?>
 <VBox alignment="TOP_LEFT" spacing="20.0" xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.agrisys.controller.HomeController"
       styleClass="view-container">
-    <children>
-        <HBox spacing="20" alignment="CENTER_LEFT">
-            <Label text="Farm Performance Dashboard" styleClass="header-label" />
-            <Button fx:id="importButton" text="Import Excel Data" onAction="#handleImportAction" />
-        </HBox>
-        <StackPane fx:id="gaugeContainer">
 
-        </StackPane>
-    </children>
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <HBox spacing="20" alignment="CENTER_LEFT">
+        <Label text="Stald Performance Dashboard" styleClass="header-label" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+        <Region HBox.hgrow="ALWAYS" />
+        <Button fx:id="importButton" text="Importer PPT Excel-data" onAction="#handleImportAction"
+                style="-fx-background-color: -agri-primary; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;"/>
+    </HBox>
+
+    <HBox spacing="15" alignment="CENTER">
+        <VBox style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8; -fx-border-color: #e9ecef; -fx-border-radius: 8;" HBox.hgrow="ALWAYS">
+            <Label text="Aktive Grise" style="-fx-text-fill: #6c757d; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+            <Label fx:id="lblTotalPigs" text="0" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: -agri-primary;"/>
+        </VBox>
+
+        <VBox style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8; -fx-border-color: #e9ecef; -fx-border-radius: 8;" HBox.hgrow="ALWAYS">
+            <Label text="Besætning average FCR" style="-fx-text-fill: #6c757d; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+            <Label fx:id="lblAverageFcr" text="0.00" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #FF9800;"/>
+        </VBox>
+
+        <VBox style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8; -fx-border-color: #e9ecef; -fx-border-radius: 8;" HBox.hgrow="ALWAYS">
+            <Label text="Synkroniserede Sensormålinger" style="-fx-text-fill: #6c757d; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+            <Label fx:id="lblTotalMeasurements" text="0" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;"/>
+        </VBox>
+    </HBox>
+
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+
+        <VBox spacing="15" prefWidth="320" minWidth="300" style="-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 8; -fx-border-color: #e9ecef; -fx-border-radius: 8;">
+            <Label text="Besætningens FCR Status" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: -agri-primary;"/>
+            <Separator/>
+
+            <StackPane fx:id="gaugeContainer" prefHeight="200" style="-fx-background-color: white; -fx-background-radius: 6;">
+            </StackPane>
+
+            <Label text="Analyse og Indsigt" style="-fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 5 0 0 0;"/>
+            <Label text="Måleren viser den samlede realtids-FCR på tværs af alle aktive stier. En værdi under 2,50 indikerer optimal udnyttelse af foderblandingen."
+                   wrapText="true" style="-fx-text-fill: #6c757d; -fx-font-size: 12px;"/>
+        </VBox>
+
+        <VBox spacing="15" HBox.hgrow="ALWAYS">
+            <StackPane fx:id="weightChartContainer" prefHeight="220" style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #e9ecef; -fx-border-radius: 8;"/>
+
+            <VBox spacing="8" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 12; -fx-background-radius: 8; -fx-border-color: #e9ecef; -fx-border-radius: 8;">
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Biologiske Alarmer &amp; Kritiske Grise (Overvågning)" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #d32f2f;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="FCR &gt; 2.80 eller Status 'Syg'" style="-fx-font-size: 11px; -fx-text-fill: #d32f2f; -fx-background-color: #fdecea; -fx-padding: 2 6; -fx-background-radius: 3; -fx-font-weight: bold;"/>
+                </HBox>
+
+                <TableView fx:id="riskTable" VBox.vgrow="ALWAYS">
+                </TableView>
+            </VBox>
+        </VBox>
+
+    </HBox>
 </VBox>
