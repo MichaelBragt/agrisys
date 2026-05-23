@@ -40,8 +40,9 @@
                     </columns>
                 </TableView>
 
-                <HBox alignment="TOP_LEFT">
-                    <Button text="+ Registrer Ny Gris" onAction="#handleOpenRegistration" styleClass="action-button"/>
+                <HBox alignment="TOP_LEFT" spacing="10">
+                    <Button fx:id="btnRegisterPig" text="+ Registrer Ny Gris" onAction="#handleOpenRegistration" styleClass="action-button"/>
+                    <Button fx:id="btnRegisterLocation" text="+ Håndter Lokationer" onAction="#handleOpenLocations" styleClass="action-button"/>
                 </HBox>
             </VBox>
 

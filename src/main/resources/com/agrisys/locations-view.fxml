@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="10" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.agrisys.controller.LocationsController">
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
+
+    <Label text="Håndter Lokationer / Bokse" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
+
+    <HBox spacing="10">
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <TableView fx:id="locationTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
+                    <TableColumn fx:id="colName" text="Navn" prefWidth="300"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox spacing="10" minWidth="250">
+            <Label text="Lokationsdetaljer" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+            <TextField fx:id="nameField" promptText="Indtast navn på lokation..." />
+            
+            <HBox spacing="10">
+                <Button text="Opret" onAction="#handleCreate" styleClass="action-button" />
+                <Button text="Opdater" onAction="#handleUpdate" styleClass="action-button" />
+                <Button text="Slet" onAction="#handleDelete" styleClass="delete-button" />
+            </HBox>
+            
+            <Button text="Ryd" onAction="#handleClear" />
+
+            <Label fx:id="messageLabel" wrapText="true" textFill="red" />
+        </VBox>
+    </HBox>
+</VBox>

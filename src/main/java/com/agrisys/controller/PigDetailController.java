@@ -6,6 +6,7 @@ import com.agrisys.dto.chart.ChartSeriesData;
 import com.agrisys.model.view.PigDetailDTO;
 import com.agrisys.model.view.PigSummary;
 import com.agrisys.service.PigDetailsService;
+import com.agrisys.model.UserSession;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
@@ -25,6 +26,8 @@ public class PigDetailController {
     @FXML private ComboBox<String> cbStatus;
     @FXML private StackPane gaugeContainer, chartContainer;
     @FXML private Button btnEdit, btnSave, btnRemoveResponder;
+    @FXML private Label lblWeightGained;
+    @FXML private Label lblTotalFeed;
 
 
     // declaring services, DTO's and vars we need
@@ -39,6 +42,12 @@ public class PigDetailController {
     @FXML
     public void initialize() {
         cbStatus.getItems().addAll("Aktiv", "Slagtet", "Syg");
+        if (UserSession.getInstance().isRaadgiver()) {
+            btnEdit.setVisible(false);
+            btnEdit.setManaged(false);
+            btnRemoveResponder.setVisible(false);
+            btnRemoveResponder.setManaged(false);
+        }
     }
 
     public void initData(PigSummary summary) {
@@ -55,11 +64,30 @@ public class PigDetailController {
                 lblLocation.setText(dto.locationName() != null ? dto.locationName() : "N/A");
                 dpBirthDate.setValue(dto.birthDate());
                 cbStatus.setValue(dto.status());
-                
+
                 btnRemoveResponder.setDisable(dto.responderId() == null);
-                
+
                 // Handle potential 0 or null weights
                 lblWeight.setText(dto.currentWeight() > 0 ? String.format("%.2f kg", dto.currentWeight()) : "Ingen data");
+
+                // --- HER LÆGGER DU DE TO NYE REGLER IND ---
+
+                // 1. Total Foderindtag (omregnes fra gram til kg)
+                // (Hvis jeres DTO metode hedder noget andet, fx getTotalFeed(), retter I bare navnet)
+                double totalFeedKg = dto.totalFeed() / 1000.0;
+                lblTotalFeed.setText(String.format("%.2f kg foder", totalFeedKg));
+
+                // 2. Total Tilvækst (Aktuel vægt minus startvægt)
+                double startWeightKg = dto.startWeight() / 1000.0;
+                double growthKg = dto.currentWeight() - startWeightKg;
+
+                if (growthKg > 0 && dto.currentWeight() > 0) {
+                    lblWeightGained.setText(String.format("%.2f kg tilvækst", growthKg));
+                } else {
+                    lblWeightGained.setText("0.00 kg (Mangler målinger)");
+                }
+
+                // ------------------------------------------
 
                 setupVisuals(dto);
             });

@@ -9,19 +9,21 @@ import java.time.LocalDate;
  * @param animalNumber  Biological ID
  * @param responderId   Current hardware ID
  * @param assignmentId  PK from Responder_Assignment (for history lookup)
- * @param birthDate     Birth date
+ //* @param birthDate     Birth date
  * @param status        Current status (Aktiv, Slagtet, Syg)
  * @param currentWeight Last recorded weight
  * @param fcr           Calculated FCR
  * @param locationName  Current pen/location
  */
 public record PigDetailDTO(
-    String animalNumber,
-    String responderId,
-    Integer assignmentId,
-    LocalDate birthDate,
-    String status,
-    double currentWeight,
-    double fcr,
-    String locationName
+        String animalNumber,
+        String responderId,
+        Integer assignmentId,
+        java.time.LocalDate birthDate,
+        String status,
+        double currentWeight,
+        double fcr,
+        String locationName,
+        double startWeight,
+        double totalFeed
 ) {}

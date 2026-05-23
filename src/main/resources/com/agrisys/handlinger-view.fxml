@@ -1,14 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
 <VBox alignment="TOP_LEFT" spacing="20.0" xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.agrisys.controller.HandlingerController"
       styleClass="view-container">
-    <children>
-        <Label text="Handlinger" styleClass="header-label" />
-    </children>
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Label text="Handlinger &amp; Eksport" styleClass="header-label" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+
+        <VBox spacing="12" prefWidth="250" minWidth="220" style="-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 8; -fx-border-color: #e9ecef; -fx-border-radius: 8;">
+
+            <Label text="Søg &amp; Filtrer" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: -agri-primary;"/>
+            <Separator/>
+
+            <Label text="Filtrer efter Sti-ID:" style="-fx-font-size: 12px; -fx-text-fill: #6c757d;"/>
+            <TextField fx:id="filterLocationField" promptText="F.eks. 1 (Tom = alle stier)..."/>
+
+            <Label text="Vægtinterval (kg):" style="-fx-font-size: 12px; -fx-text-fill: #6c757d;"/>
+            <HBox spacing="5">
+                <TextField fx:id="filterMinWeightField" promptText="Min kg" HBox.hgrow="ALWAYS"/>
+                <Label text="-" style="-fx-padding: 4 0 0 0;"/>
+                <TextField fx:id="filterMaxWeightField" promptText="Max kg" HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+            <Label text="Filtrer efter FCR (under eller lig med):" style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-padding: 5 0 0 0;"/>
+            <TextField fx:id="filterFcrField" promptText="F.eks. 2.50 (Viser top-grise)..."/>
+
+            <Label text="Data Værktøjer" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: -agri-primary; -fx-padding: 10 0 0 0;"/>
+            <Separator/>
+
+            <Button fx:id="btnImportData" text="Importer nye målinger" onAction="#handleImportAction"
+                    maxWidth="Infinity" prefHeight="38" style="-fx-background-color: -agri-primary; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;">
+            </Button>
+            <Separator/>
+
+            <MenuButton text="Eksporter til CSV" maxWidth="Infinity" prefHeight="38"
+                        style="-fx-background-color: -agri-primary; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;">
+                <items>
+                    <MenuItem text="Eksporter nuværende filter / visning" onAction="#handleExportAllCsv"/>
+                    <MenuItem text="Nuværende lokation/sti" onAction="#handleExportLocationCsv"/>
+                    <MenuItem text="Markerede grise i tabellen" onAction="#handleExportSelectedCsv"/>
+                </items>
+            </MenuButton>
+
+            <Label text="Stald Styring" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: -agri-primary; -fx-padding: 10 0 0 0;"/>
+            <Separator/>
+
+            <Button fx:id="btnRegisterPig" text="Registrer ny gris" onAction="#handleOpenPigRegistration"
+                    maxWidth="Infinity" prefHeight="38" style="-fx-background-color: -agri-primary; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;"/>
+
+            <Button fx:id="btnRegisterLocation" text="Administrer lokationer" onAction="#handleOpenLocations"
+                    maxWidth="Infinity" prefHeight="38" style="-fx-background-color: -agri-primary; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;"/>
+        </VBox>
+
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Overvågningsliste" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+            <TableView fx:id="tableView" VBox.vgrow="ALWAYS" style="-fx-background-radius: 8;">
+            </TableView>
+        </VBox>
+
+    </HBox>
 </VBox>

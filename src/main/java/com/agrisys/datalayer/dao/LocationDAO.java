@@ -94,6 +94,62 @@ public class LocationDAO {
     }
 
     /**
+     * Creates a new Location in the database using a new connection.
+     *
+     * @param locationName The name of the new location.
+     * @return The generated location_id for the new location.
+     * @throws SQLException if a database error occurs.
+     */
+    public int create(String locationName) throws SQLException {
+        String sql = "INSERT INTO Location (location_name) VALUES (?)";
+        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            pstmt.setString(1, locationName);
+            pstmt.executeUpdate();
+            try (ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+                throw new SQLException("Creating location failed, no ID obtained.");
+            }
+        }
+    }
+
+    /**
+     * Updates an existing Location.
+     *
+     * @param locationId The ID of the location to update.
+     * @param newName The new name for the location.
+     * @return true if the update was successful, false otherwise.
+     * @throws SQLException if a database error occurs.
+     */
+    public boolean update(int locationId, String newName) throws SQLException {
+        String sql = "UPDATE Location SET location_name = ? WHERE location_id = ?";
+        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, newName);
+            pstmt.setInt(2, locationId);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Deletes a Location by its ID.
+     *
+     * @param locationId The ID of the location to delete.
+     * @return true if the deletion was successful, false otherwise.
+     * @throws SQLException if a database error occurs.
+     */
+    public boolean delete(int locationId) throws SQLException {
+        String sql = "DELETE FROM Location WHERE location_id = ?";
+        try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, locationId);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
+    /**
      * Helper method to map a ResultSet row to a LocationRecord.
      */
     private LocationRecord map(ResultSet rs) throws SQLException {

@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<Dialog title="Profil" xmlns="http://javafx.com/javafx/21">
+<Dialog title="Profil" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
    <dialogPane>
       <DialogPane headerText="Brugerprofil" prefWidth="360.0" styleClass="profile-dialog" stylesheets="@style.css">
          <content>
@@ -18,11 +18,11 @@
                      <ColumnConstraints hgrow="ALWAYS" minWidth="160.0" />
                   </columnConstraints>
                   <Label styleClass="profile-field-label" text="Bruger" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                  <Label styleClass="profile-field-value" text="Ikke angivet" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                  <Label fx:id="lblProfileUsername" styleClass="profile-field-value" text="Ikke angivet" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                   <Label styleClass="profile-field-label" text="Gård" GridPane.columnIndex="0" GridPane.rowIndex="1" />
                   <Label styleClass="profile-field-value" text="Ikke angivet" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                   <Label styleClass="profile-field-label" text="Rolle" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                  <Label styleClass="profile-field-value" text="Ikke angivet" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                  <Label fx:id="lblProfileRole" styleClass="profile-field-value" text="Ikke angivet" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                </GridPane>
             </VBox>
          </content>

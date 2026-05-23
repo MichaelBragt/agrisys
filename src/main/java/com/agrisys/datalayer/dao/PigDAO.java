@@ -15,7 +15,7 @@ import java.util.Optional;
  * DAO for Pig table. Implements CRUD for biological data.
  */
 public class PigDAO {
-    
+
     /**
      * Ensures a pig exists in the database. If it doesn't, it creates it.
      */
@@ -81,19 +81,12 @@ public class PigDAO {
     private PigRecord map(ResultSet rs) throws SQLException {
         Date birth = rs.getDate("birth_date");
         return new PigRecord(
-            rs.getString("animal_number"),
-            birth != null ? birth.toLocalDate() : null,
-            rs.getString("status")
+                rs.getString("animal_number"),
+                birth != null ? birth.toLocalDate() : null,
+                rs.getString("status")
         );
     }
 
-    /**
-     * Fetches aggregated summary data for all active pigs.
-     * Uses an OUTER APPLY for efficient "latest weight" retrieval in MSSQL.
-     * 
-     * @return List of PigSummary objects.
-     * @throws SQLException On database communication failure.
-     */
     /**
      * Fetches aggregated summary data for all active pigs.
      * Uses OUTER APPLY for both the latest and the earliest measurements to ensure
@@ -109,26 +102,24 @@ public class PigDAO {
             p.birth_date,
             latest_meas.pig_weight AS latest_weight,
             earliest_meas.pig_weight AS start_weight,
-            -- Samlet foderindtag for grisen
-            (SELECT SUM(pd2.feed_intake) FROM PPT_Data pd2 WHERE pd2.assignment_id = ra.assignment_id) AS total_feed
+            (SELECT SUM(pd2.feed_intake) FROM PPT_Data pd2 WHERE pd2.assignment_id = ra.assignment_id) AS total_feed,
+            p.status
         FROM Pig p
         LEFT JOIN Responder_Assignment ra ON p.animal_number = ra.animal_number AND ra.date_removed IS NULL
         LEFT JOIN Pig_Location pl ON p.animal_number = pl.animal_number AND pl.departed_at IS NULL
-        -- Hent den ALLERNYESTE måling (Vægt lige nu)
         OUTER APPLY (
             SELECT TOP 1 pd.pig_weight 
             FROM PPT_Data pd 
             WHERE pd.assignment_id = ra.assignment_id 
             ORDER BY pd.visit_time DESC
         ) AS latest_meas
-        -- Hent den ALLERFØRSTE måling (Startvægt)
         OUTER APPLY (
             SELECT TOP 1 pd3.pig_weight 
             FROM PPT_Data pd3 
             WHERE pd3.assignment_id = ra.assignment_id AND pd3.pig_weight > 0
             ORDER BY pd3.visit_time ASC
         ) AS earliest_meas
-        WHERE p.status = 'Aktiv'
+        WHERE p.status IN ('Aktiv', 'Syg')
         """;
 
         try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
@@ -138,26 +129,22 @@ public class PigDAO {
             while (rs.next()) {
                 Date birth = rs.getDate("birth_date");
 
-                // RETTET: Vi bruger de korrekte aliasser fra vores SQL-select her!
+                // RETTET: Trækker status ud af ResultSet, så den eksisterer som variabel
+                String status = rs.getString("status");
+
                 double rawLatestWeight = rs.getDouble("latest_weight");
                 double rawStartWeight = rs.getDouble("start_weight");
                 double totalFeedGrams = rs.getDouble("total_feed");
 
-                // 1. Omregn den seneste vægt til kg til UI-tabellen
                 double weightInKg = rawLatestWeight / 1000.0;
-
-                // 2. Beregn den reelle tilvækst i gram
                 double growthGrams = rawLatestWeight - rawStartWeight;
-
                 double fcr = 0.0;
 
-                // 3. Robust Java-beregning med indbygget støj-filter
-                if (totalFeedGrams > 0 && growthGrams > 1000) { // Kræver mindst 1 kg tilvækst
+                if (totalFeedGrams > 0 && growthGrams > 1000) {
                     fcr = totalFeedGrams / growthGrams;
-                    fcr = Math.round(fcr * 100.0) / 100.0; // Afrund til 2 decimaler
+                    fcr = Math.round(fcr * 100.0) / 100.0;
                 }
 
-                // Ekstremværdifilter (Hvis dataene i databasen er helt skæve for en enkelt gris)
                 if (fcr < 1.0 || fcr > 5.0) {
                     fcr = 0.0;
                 }
@@ -168,7 +155,8 @@ public class PigDAO {
                         rs.getObject("location_id") != null ? rs.getInt("location_id") : null,
                         birth != null ? birth.toLocalDate() : null,
                         weightInKg,
-                        fcr
+                        fcr,
+                        status // Afleveres korrekt nu!
                 ));
             }
         }
@@ -176,7 +164,7 @@ public class PigDAO {
     }
 
     /**
-     * Henter summary data for grise på en specifik lokation.
+     * RETTET: Henter lokationsspecifik data med korrekte aliasser samt fuld FCR beregning!
      */
     public List<PigSummary> getPigSummariesByLocation(int locationId) throws SQLException {
         List<PigSummary> summaries = new ArrayList<>();
@@ -186,7 +174,10 @@ public class PigDAO {
                 ra.responder_id, 
                 pl.location_id, 
                 p.birth_date,
-                latest_weight.pig_weight
+                latest_meas.pig_weight AS latest_weight,
+                earliest_meas.pig_weight AS start_weight,
+                (SELECT SUM(pd2.feed_intake) FROM PPT_Data pd2 WHERE pd2.assignment_id = ra.assignment_id) AS total_feed,
+                p.status
             FROM Pig p
             INNER JOIN Pig_Location pl ON p.animal_number = pl.animal_number AND pl.departed_at IS NULL
             LEFT JOIN Responder_Assignment ra ON p.animal_number = ra.animal_number AND ra.date_removed IS NULL
@@ -195,8 +186,14 @@ public class PigDAO {
                 FROM PPT_Data pd 
                 WHERE pd.assignment_id = ra.assignment_id 
                 ORDER BY pd.visit_time DESC
-            ) AS latest_weight
-            WHERE p.status = 'Aktiv' AND pl.location_id = ?
+            ) AS latest_meas
+            OUTER APPLY (
+                SELECT TOP 1 pd3.pig_weight 
+                FROM PPT_Data pd3 
+                WHERE pd3.assignment_id = ra.assignment_id AND pd3.pig_weight > 0
+                ORDER BY pd3.visit_time ASC
+            ) AS earliest_meas
+            WHERE p.status IN ('Aktiv', 'Syg') AND pl.location_id = ?
             """;
 
         try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
@@ -205,13 +202,35 @@ public class PigDAO {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     Date birth = rs.getDate("birth_date");
+
+                    // RETTET: Trækker status ud for lokations-søgningen også
+                    String status = rs.getString("status");
+
+                    double rawLatestWeight = rs.getDouble("latest_weight");
+                    double rawStartWeight = rs.getDouble("start_weight");
+                    double totalFeedGrams = rs.getDouble("total_feed");
+
+                    double weightInKg = rawLatestWeight / 1000.0;
+                    double growthGrams = rawLatestWeight - rawStartWeight;
+                    double fcr = 0.0;
+
+                    if (totalFeedGrams > 0 && growthGrams > 1000) {
+                        fcr = totalFeedGrams / growthGrams;
+                        fcr = Math.round(fcr * 100.0) / 100.0;
+                    }
+
+                    if (fcr < 1.0 || fcr > 5.0) {
+                        fcr = 0.0;
+                    }
+
                     summaries.add(new PigSummary(
-                        rs.getString("animal_number"),
-                        rs.getString("responder_id"),
-                        rs.getInt("location_id"),
-                        birth != null ? birth.toLocalDate() : null,
-                        rs.getDouble("pig_weight") / 1000.0,
-                        null
+                            rs.getString("animal_number"),
+                            rs.getString("responder_id"),
+                            rs.getInt("location_id"),
+                            birth != null ? birth.toLocalDate() : null,
+                            weightInKg,
+                            fcr,
+                            status // RETTET: Tilføjet som 7. parameter
                     ));
                 }
             }
@@ -221,8 +240,6 @@ public class PigDAO {
 
     /**
      * Fetches full details for a specific pig, including the active responder and location.
-     * @param animalNumber The unique ID of the pig.
-     * @return PigDetailDTO containing aggregated state.
      */
     public Optional<PigDetailDTO> getPigDetail(String animalNumber) throws SQLException {
         String sql = """
@@ -233,11 +250,8 @@ public class PigDAO {
             p.birth_date,
             p.status,
             l.location_name,
-            -- Hent den seneste REELLE vægt (ignorer 0-støj)
             (SELECT TOP 1 pd.pig_weight FROM PPT_Data pd WHERE pd.assignment_id = ra.assignment_id AND pd.pig_weight > 0 ORDER BY pd.visit_time DESC) as weight,
-            -- Hent den allerførste REELLE startvægt
             (SELECT TOP 1 pd3.pig_weight FROM PPT_Data pd3 WHERE pd3.assignment_id = ra.assignment_id AND pd3.pig_weight > 0 ORDER BY pd3.visit_time ASC) as start_weight,
-            -- Samlet foder
             (SELECT SUM(feed_intake) FROM PPT_Data WHERE assignment_id = ra.assignment_id) as total_feed
         FROM Pig p
         LEFT JOIN Responder_Assignment ra ON p.animal_number = ra.animal_number AND ra.date_removed IS NULL
@@ -255,21 +269,17 @@ public class PigDAO {
                     double rawStartWeight = rs.getDouble("start_weight");
                     double totalFeed = rs.getDouble("total_feed");
 
-                    // 1. Lav om til kg, så der står 74.00 kg i stedet for 74000.00 kg
                     double weightInKg = rawWeight / 1000.0;
-
-                    // 2. Beregn biologisk korrekt FCR (Foder / Tilvækst)
                     double growthGrams = rawWeight - rawStartWeight;
                     double fcr = 0.0;
 
                     if (totalFeed > 0 && growthGrams > 1000) {
                         fcr = totalFeed / growthGrams;
-                        fcr = Math.round(fcr * 100.0) / 100.0; // Afrund til 2 decimaler
+                        fcr = Math.round(fcr * 100.0) / 100.0;
                     }
 
-                    // Sikring mod urealistiske tal (støj i data)
                     if (fcr < 1.0 || fcr > 5.0) {
-                        fcr = 2.85; // En realistisk standard foderudnyttelse som fallback
+                        fcr = 2.85;
                     }
 
                     return Optional.of(new PigDetailDTO(
@@ -278,9 +288,11 @@ public class PigDAO {
                             rs.getObject("assignment_id") != null ? rs.getInt("assignment_id") : null,
                             rs.getDate("birth_date") != null ? rs.getDate("birth_date").toLocalDate() : null,
                             rs.getString("status"),
-                            weightInKg, // Sender vægten afsted i KG nu!
+                            weightInKg,
                             fcr,
-                            rs.getString("location_name")
+                            rs.getString("location_name"),
+                            rawStartWeight,
+                            totalFeed
                     ));
                 }
             }
