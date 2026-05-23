@@ -337,3 +337,37 @@
     -fx-text-fill: -agri-text-dark;
     -fx-font-weight: bold;
 }
+
+/* Tvinger teksten i alle MenuButtons på handlinger-fanen til at blive hvid og centreret */
+.menu-button {
+    -fx-alignment: CENTER;
+}
+
+.menu-button .label {
+    -fx-text-fill: white !important;
+    -fx-alignment: CENTER;
+}
+
+/* Fjerner den lille grimme sorte pil eller sikrer, at den også ser pæn ud (valgfrit) */
+.menu-button .arrow-button .arrow {
+    -fx-background-color: white;
+}
+
+/* 1. Tvinger selve dropdown-boksen (context-menuen) til at blive blå */
+.context-menu {
+    -fx-background-color: -agri-primary;
+    -fx-background-radius: 5;
+    -fx-border-color: derive(-agri-primary, -10%); /* Gør kanten en bittelille smule mørkere */
+    -fx-border-radius: 5;
+    -fx-padding: 5 0;
+}
+
+/* 2. Tvinger teksten på hvert punkt til at blive kridhvid */
+.menu-item .label {
+    -fx-text-fill: white !important;
+}
+
+/* 3. Sørg for at punktet ændrer farve eller bliver fremhævet, når musen holdes over */
+.menu-item:focused, .menu-item:hover {
+    -fx-background-color: derive(-agri-primary, 15%); /* Gør den lidt lysere blå når man hovrer */
+}

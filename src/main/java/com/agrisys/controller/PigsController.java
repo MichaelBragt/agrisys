@@ -46,6 +46,7 @@ public class PigsController {
 
     @FXML private ComboBox<LocationRecord> locationSelector; 
     @FXML private Button btnRegisterPig;
+    @FXML private Button btnRegisterLocation;
 
     // De to containere i højre side
     @FXML private StackPane chartContainer;
@@ -97,6 +98,17 @@ public class PigsController {
         } else {
             // Fallback if no locations are found, still load all pig data
             refreshPigData(null);
+        }
+
+        if (com.agrisys.model.UserSession.getInstance().isRaadgiver()) {
+            // Vi gør knapperne usynlige og fjerner dem fra layout-beregningen
+            btnRegisterPig.setVisible(false);
+            btnRegisterPig.setManaged(false);
+
+            btnRegisterLocation.setVisible(false);
+            btnRegisterLocation.setManaged(false);
+
+            System.out.println("LOG -> Brugeren er Rådgiver. Staldværktøjer er skjult.");
         }
     }
 
