@@ -3,13 +3,17 @@ package com.agrisys.controller;
 import com.agrisys.Utils.*;
 import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.dto.chart.ChartSeriesData;
+import com.agrisys.datalayer.entity.LocationRecord;
 import com.agrisys.model.view.PigDetailDTO;
 import com.agrisys.model.view.PigSummary;
+import com.agrisys.service.LocationService;
 import com.agrisys.service.PigDetailsService;
 import com.agrisys.model.UserSession;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
+import javafx.util.StringConverter;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,14 +28,15 @@ public class PigDetailController {
     @FXML private Button btnVegt, btnFoder, btnFcr;
     @FXML private DatePicker dpBirthDate;
     @FXML private ComboBox<String> cbStatus;
+    @FXML private ComboBox<LocationRecord> cbLocation;
     @FXML private StackPane gaugeContainer, chartContainer;
     @FXML private Button btnEdit, btnSave, btnRemoveResponder;
     @FXML private Label lblWeightGained;
     @FXML private Label lblTotalFeed;
 
-
     // declaring services, DTO's and vars we need
     private final PigDetailsService service = new PigDetailsService();
+    private final LocationService locationService = new LocationService();
     private PigDetailDTO currentPig;
     private boolean isEditMode = false;
 
@@ -42,12 +47,29 @@ public class PigDetailController {
     @FXML
     public void initialize() {
         cbStatus.getItems().addAll("Aktiv", "Slagtet", "Syg");
+        setupLocationComboBox();
+
         if (UserSession.getInstance().isRaadgiver()) {
             btnEdit.setVisible(false);
             btnEdit.setManaged(false);
             btnRemoveResponder.setVisible(false);
             btnRemoveResponder.setManaged(false);
         }
+    }
+
+    private void setupLocationComboBox() {
+        cbLocation.setItems(FXCollections.observableArrayList(locationService.getAllLocations()));
+        cbLocation.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(LocationRecord loc) {
+                return loc == null ? "" : loc.locationId() + " - " + loc.locationName();
+            }
+
+            @Override
+            public LocationRecord fromString(String string) {
+                return null;
+            }
+        });
     }
 
     public void initData(PigSummary summary) {
@@ -62,6 +84,13 @@ public class PigDetailController {
                 lblAnimalNumber.setText(dto.animalNumber());
                 lblResponderId.setText(dto.responderId() != null ? dto.responderId() : "Ingen");
                 lblLocation.setText(dto.locationName() != null ? dto.locationName() : "N/A");
+                
+                // Select current location in ComboBox
+                cbLocation.getItems().stream()
+                    .filter(loc -> loc.locationName().equals(dto.locationName()))
+                    .findFirst()
+                    .ifPresent(loc -> cbLocation.setValue(loc));
+
                 dpBirthDate.setValue(dto.birthDate());
                 cbStatus.setValue(dto.status());
 
@@ -181,6 +210,13 @@ public class PigDetailController {
     @FXML
     private void handleToggleEdit() {
         isEditMode = !isEditMode;
+
+        // Toggle view elements
+        lblLocation.setVisible(!isEditMode);
+        lblLocation.setManaged(!isEditMode);
+        cbLocation.setVisible(isEditMode);
+        cbLocation.setManaged(isEditMode);
+
         dpBirthDate.setDisable(!isEditMode);
         cbStatus.setDisable(!isEditMode);
         btnSave.setVisible(isEditMode);
@@ -191,6 +227,7 @@ public class PigDetailController {
     private void handleSave() {
         String selectedStatus = cbStatus.getValue();
         LocalDate selectedBirthDate = dpBirthDate.getValue();
+        LocationRecord selectedLocation = cbLocation.getValue();
         boolean shouldRemove = false;
 
         if (!selectedStatus.equals("Aktiv") && currentPig.responderId() != null) {
@@ -203,7 +240,8 @@ public class PigDetailController {
         }
 
         try {
-            service.updatePigDetails(currentPig.animalNumber(), selectedStatus, selectedBirthDate, shouldRemove, currentPig.responderId());
+            Integer newLocId = selectedLocation != null ? selectedLocation.locationId() : null;
+            service.updatePigDetails(currentPig.animalNumber(), selectedStatus, selectedBirthDate, shouldRemove, currentPig.responderId(), newLocId);
             handleToggleEdit();
             refreshData(currentPig.animalNumber());
         } catch (SQLException e) {
@@ -218,7 +256,7 @@ public class PigDetailController {
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.YES) {
                 try {
-                    service.updatePigDetails(currentPig.animalNumber(), currentPig.status(), currentPig.birthDate(), true, currentPig.responderId());
+                    service.updatePigDetails(currentPig.animalNumber(), currentPig.status(), currentPig.birthDate(), true, currentPig.responderId(), null);
                     refreshData(currentPig.animalNumber());
                 } catch (SQLException e) {
                     UIErrorReport.showDatabaseError(e);

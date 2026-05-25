@@ -23,7 +23,10 @@
                 </HBox>
 
                 <Label text="Lokation:" GridPane.rowIndex="2" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
-                <Label fx:id="lblLocation" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            <StackPane alignment="CENTER_LEFT" GridPane.rowIndex="2" GridPane.columnIndex="1">
+                <Label fx:id="lblLocation" visible="true" managed="true"/>
+                <ComboBox fx:id="cbLocation" visible="false" managed="false" prefWidth="150"/>
+            </StackPane>
 
                 <Label text="Fødselsdato:" GridPane.rowIndex="3" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
                 <DatePicker fx:id="dpBirthDate" disable="true" GridPane.rowIndex="3" GridPane.columnIndex="1"/>

@@ -100,6 +100,24 @@ public class PigLocationDAO {
     }
 
     /**
+     * Closes the current active placement for a pig by setting the departed_at timestamp.
+     * This is a critical part of the "Historical Brain" logic to ensure traceability.
+     *
+     * @param conn The active transactional connection.
+     * @param animalNumber The unique ID of the pig.
+     * @throws SQLException If the update fails.
+     */
+    public void closeCurrentLocation(Connection conn, String animalNumber) throws SQLException {
+        String sql = "UPDATE Pig_Location SET departed_at = GETUTCDATE() " +
+                     "WHERE animal_number = ? AND departed_at IS NULL";
+        
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, animalNumber);
+            pstmt.executeUpdate();
+        }
+    }
+
+    /**
      * Helper method to map a ResultSet row to a PigLocationRecord.
      */
     private PigLocationRecord map(ResultSet rs) throws SQLException {
