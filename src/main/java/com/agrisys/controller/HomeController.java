@@ -32,8 +32,10 @@ import java.util.List;
 
 /**
  * Controller for the Main Home Dashboard.
- * Displays overall herd metrics, live trends, and dynamic biological alert cards.
- * Primary Author: [Dit Navn / Gruppe]
+ * Displays aggregated herd metrics, live FCR trends, and dynamic biological alert cards.
+ * * @author [Dit Navn / Gruppemedlem]
+ * @see "Requirement 2.2: Landmanden og rådgiveren kan filtrere/få vist data og hændelser for hele besætningen"
+ * @see "Problem 2.3: Innovativ og intuitiv præsentation af PPT-data frem for uoverskuelige tabeller"
  */
 public class HomeController {
 

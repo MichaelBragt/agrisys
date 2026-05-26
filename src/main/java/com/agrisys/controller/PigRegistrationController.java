@@ -13,6 +13,16 @@ import javafx.scene.layout.VBox;
 import java.sql.SQLException;
 import javafx.util.StringConverter;
 
+
+/**
+ * Controller managing the registration wizard for new pigs.
+ * Handles validation and coupling of physical RFID responders to animal records.
+ * * @author [Gruppemedlem]
+ * @see "Requirement 2.2 (UC): Oprette og indsætte en gris"
+ * @see "Domain Rule 1.2: Allokering af 15-cifret RFID-øremærke (Responder ID) til dyrenummer"
+ */
+
+
 public class PigRegistrationController {
     @FXML private TextField animalNumberField, newResponderField;
     @FXML private DatePicker birthDatePicker;

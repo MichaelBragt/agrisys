@@ -12,8 +12,14 @@ import java.util.Optional;
 // Primær forfatter: Michael Bragt
 
 /**
- * DAO for Pig table. Implements CRUD for biological data.
+ * Data Access Object for the Pig table.
+ * Executes core CRUD operations and complex database aggregations (OUTER APPLY)
+ * for herd tracking and biological algorithms.
+ * * @author Michael Bragt
+ * @see "Technology 2.5: Database implementering i MS-SQL Server"
+ * @see "Domain Rule 1.2: Automatisk beregning af FCR (Feed Conversion Rate)"
  */
+
 public class PigDAO {
 
     /**
