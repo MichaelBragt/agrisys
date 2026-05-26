@@ -34,13 +34,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Controller til styring af den primære griseoversigt (Pigs-fanen).
- * Håndterer visning af besætningens data, lokationsbaseret filtrering og live-grafer.
+ * Controller til styring af griseoversigten og det tilhørende vækstdashboard.
+ * Kobler den visuelle præsentation sammen med de biologiske analysealgoritmer.
  * * @author Eirik (og gruppen)
- * @see "Krav 2.2: Landmanden og rådgiveren kan filtrere i data for hele besætningen via lokation"
- * @see "Krav 2.2: Landmanden og rådgiveren kan få vist data og hændelser for en gris (Vægt- og spiseaktivitet)"
- * @see "Krav 2.2: Rollebaseret adgangsstyring - Rådgivere må ikke oprette grise eller stier"
+ * @see "PS-01: Datavisualisering - Transformation af rådata til dashboards"
+        * @see "FR-10: Systemet skal præsentere vækst- og foderdata via et Vækst Dashboard med grafer"
+        * @see "FR-18: Navigation - Genvej via dobbeltklik til profil"
+        * @see "NFR-01: Usability - Landmanden skal kunne tilgå en vækstkurve med maks. 3 klik"
  */
+
 public class PigsController {
 
     // JavaFX Tabel- og kolonnekomponenter til populationsoversigten
@@ -57,7 +59,7 @@ public class PigsController {
     @FXML private Button btnRegisterPig;
     @FXML private Button btnRegisterLocation;
 
-    // UI-containere i højre side til dynamisk indsprøjtning af grafer og målere
+    // UI-containere til grafer og gauges (Opfylder FR-10 og PS-01)
     @FXML private StackPane chartContainer;
     @FXML private StackPane gaugeContainer2;
     @FXML private StackPane weightChartContainer;
@@ -104,7 +106,7 @@ public class PigsController {
             }
         });
 
-        // 4. Lyt efter ændringer i landmandens sti-valg (Opdaterer alt data live ved klik!)
+        // Lokationsfiltrering jf. FR-06
         locationSelector.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             // Hvis newVal er null, betragtes det som "Alle lokationer" (null sendes til service)
             refreshPigData(newVal != null ? newVal.locationId() : null);
@@ -118,9 +120,7 @@ public class PigsController {
             refreshPigData(null);
         }
 
-        // =========================================================================
-        // ROLLEBASERET ADGANGSSTYRING (RBAC) - AUTORISATION
-        // =========================================================================
+        // Rollebaseret adgangsstyring (Autorisation jf. FR-15 og PS-02)
         if (com.agrisys.model.UserSession.getInstance().isRaadgiver()) {
             // Skjul og fjern staldstyringsværktøjer fuldstændig, hvis brugeren er Rådgiver
             btnRegisterPig.setVisible(false);
@@ -151,6 +151,7 @@ public class PigsController {
 
         // Here we implement functionality to double-click a row in the table (PS-01)
         // for opening a detailed view for the pig in the selected row
+        // Dobbeltklik-genvej til griseprofil (Opfylder FR-18 og NFR-01: Vækstkurve inden for 2 klik!)
         pigTable.setRowFactory(tv -> {
             javafx.scene.control.TableRow<PigSummary> row = new javafx.scene.control.TableRow<>();
             row.setOnMouseClicked(event -> {
@@ -177,8 +178,7 @@ public class PigsController {
     }
 
     /**
-     * Opdaterer tabel, grafer og målere asynkront baseret på den valgte lokation.
-     * @param selectedLocationId Det valgte sti-ID, eller null for hele stalden.
+     * Opdaterer grafer og tabeller asynkront (Understøtter FR-10 Vækst Dashboard og PS-01)
      */
     private void refreshPigData(Integer selectedLocationId) {
         // Map our special ID 0 ("Alle Lokationer") to null for service calls
@@ -202,7 +202,7 @@ public class PigsController {
 
 
     /**
-     * Henter og tegner besætningens eller stiens historiske FCR-udviklingstrend.
+     * Præsenterer FCR-tendenser grafisk (Opfylder FR-10 / PS-01)
      */
     private void readPopulationGraph(Integer locationId) throws SQLException {
         try {
@@ -226,7 +226,7 @@ public class PigsController {
     }
 
     /**
-     * Opdaterer og tegner FCR-effektivitetsmåleren (Gauge) baseret på det nyeste datapunkt.
+     * Viser akkumuleret effektivitetsmåling live via tilpasset Gauge-komponent (PS-01)
      */
     private void showStatusGauge(Integer locationId) throws SQLException {
         try {
@@ -254,7 +254,7 @@ public class PigsController {
     }
 
     /**
-     * Åbner popup-modalen med detaljeret historik og redigeringsmuligheder for en enkelt gris.
+     * Åbner den individuelle griseprofil (Opfylder FR-05 samt NFR-01 via direkte sti)
      */
     private void handleOpenDetailView(PigSummary selectedPig) {
         try {
@@ -279,9 +279,7 @@ public class PigsController {
         }
     }
 
-    /**
-     * Åbner oprettelsesguiden til registrering af en ny gris i systemet.
-     */
+    // Oprettelseshandlinger (Understøtter FR-02 og FR-19)
     @FXML
     private void handleOpenRegistration() {
         try {
@@ -348,7 +346,7 @@ public class PigsController {
     }
 
     /**
-     * Henter og viser den gennemsnitlige vægtudviklingstrend over tid.
+     * Præsenterer den overordnede gennemsnitlige vægtudviklingstrend (FR-10 Vækst Dashboard)
      */
     private void readWeightGraph(Integer locationId) throws SQLException {
         try {
