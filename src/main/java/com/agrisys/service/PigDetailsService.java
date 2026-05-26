@@ -16,6 +16,10 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+// Primær forfatter: Michael Bragt
+// Sporbarhed: PS-02, PS-01 | FR-03, FR-04, FR-05
+// For optimization this class should be broken into several classes
+
 /**
  * Service for handling detailed pig operations.
  * Implements logic for status changes and responder de-assignment.
@@ -33,6 +37,7 @@ public class PigDetailsService {
      * @return An Optional containing the detailed DTO if found.
      * @throws SQLException if a database error occurs.
      */
+    // Sporbarhed: PS-01 | FR-05
     public Optional<PigDetailDTO> getDetailedInfo(String animalNumber) throws SQLException {
         return pigDAO.getPigDetail(animalNumber);
     }
@@ -44,6 +49,7 @@ public class PigDetailsService {
      * @return ChartSeriesData formatted for the AgrisysChartBuilder.
      * @throws SQLException if a database error occurs.
      */
+    // Sporbarhed: PS-01 | FR-05
     public ChartSeriesData getPigWeightHistory(String animalNumber, int assignmentId) throws SQLException {
         var points = pptDataDAO.getWeightHistory(assignmentId);
         return new ChartSeriesData("Vægt for " + animalNumber, points);
@@ -59,6 +65,7 @@ public class PigDetailsService {
      * @param newLocationId The ID of the new location to move the pig to.
      * @throws SQLException if the transaction fails.
      */
+    // Sporbarhed: PS-02 | FR-03
     public void updatePigDetails(String animalNumber, String newStatus, LocalDate birthDate, boolean releaseResponder, String responderId, Integer newLocationId) throws SQLException {
         // We get the shared connection but WE DO NOT CLOSE IT because it's a Singleton.
         Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
@@ -99,11 +106,13 @@ public class PigDetailsService {
         }
     }
 
+    // Sporbarhed: PS-01 | FR-05
     public ChartSeriesData getPigFeedHistory(String animalNumber, int assignmentId) throws SQLException {
         var points = pptDataDAO.getFeedHistory(assignmentId);
         return new ChartSeriesData("Foderindtag for " + animalNumber, points);
     }
 
+    // Sporbarhed: PS-01 | FR-05
     public ChartSeriesData getPigFcrHistory(String animalNumber, int assignmentId) throws SQLException {
         var points = pptDataDAO.getIndividualFcrHistory(assignmentId);
         return new ChartSeriesData("FCR udvikling for " + animalNumber, points);
@@ -116,6 +125,7 @@ public class PigDetailsService {
      * @param responderId The responder ID.
      * @throws SQLException if the database update fails.
      */
+    // Sporbarhed: PS-02 | FR-03
     public void removeResponderFromPig(Connection conn, String animalNumber, String responderId) throws SQLException {
         // Find active assignment
         var assignmentOpt = assignmentDAO.findActiveAssignmentByResponderId(conn, responderId);

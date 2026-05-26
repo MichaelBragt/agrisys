@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for ExcelParserService.
+ * Primær forfatter: Michael Bragt
  */
 class ExcelParserServiceTest {
 

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 // Primær forfatter: Michael Bragt
+// Sporbarhed: PS-03 | FR-01
 
 /**
  * Service responsible for parsing Excel (.xlsx) files using Apache POI.
