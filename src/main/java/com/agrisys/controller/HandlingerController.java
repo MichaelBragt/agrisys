@@ -18,6 +18,12 @@ import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
 
+// Primær forfatter: Eirik
+// Sporbarhed: FR-01, FR-02, FR-06, FR-07
+
+/**
+ *
+ */
 public class HandlingerController {
 
     @FXML
@@ -46,6 +52,9 @@ public class HandlingerController {
     // FilteredList der pakker master-listen ind og styrer hvad der vises
     private FilteredList<PigSummary> filteredPigList;
 
+    /**
+     *
+     */
     @FXML
     public void initialize() {
         // 1. Tillad multi-selection
@@ -130,13 +139,10 @@ public class HandlingerController {
 
     }
 
-
-    /**
-     * Kernen i filtreringen: Evaluerer hver enkelt gris mod landmandens indtastede værdier.
-     */
     /**
      * Kernen i filtreringen: Evaluerer hver enkelt gris mod sti, vægt OG FCR.
      */
+    // Sporbarhed: FR-06
     private void updateFilters() {
         filteredPigList.setPredicate(pig -> {
 
@@ -190,6 +196,9 @@ public class HandlingerController {
         });
     }
 
+    /**
+     *
+     */
     private void loadPigData() {
         try {
             masterPigList.clear();
@@ -203,6 +212,10 @@ public class HandlingerController {
         }
     }
 
+    /**
+     *
+     */
+    // Sporbarhed: PS-04 | FR-07
     @FXML
     private void handleExportAllCsv() {
         Stage stage = (Stage) tableView.getScene().getWindow();
@@ -210,6 +223,10 @@ public class HandlingerController {
         csvExportService.exportPigSummariesToCsv(stage, filteredPigList);
     }
 
+    /**
+     *
+     */
+    // Sporbarhed: PS-04 | FR-07
     @FXML
     private void handleExportLocationCsv() {
         String locationInput = filterLocationField.getText();
@@ -222,6 +239,9 @@ public class HandlingerController {
         csvExportService.exportPigSummariesToCsv(stage, filteredPigList);
     }
 
+    /**
+     *
+     */
     @FXML
     private void handleExportSelectedCsv() {
         Stage stage = (Stage) tableView.getScene().getWindow();
@@ -234,6 +254,9 @@ public class HandlingerController {
         csvExportService.exportPigSummariesToCsv(stage, markeredeGrise);
     }
 
+    /**
+     *
+     */
     @FXML
     private void handleOpenPigRegistration() {
         try {
@@ -307,6 +330,9 @@ public class HandlingerController {
         }
     }
 
+    /**
+     *
+     */
     @FXML
     private void handleImportAction() { // Kaldes fra fx:onAction="#handleImportCsv" i FXML
         FileChooser fileChooser = new FileChooser();
