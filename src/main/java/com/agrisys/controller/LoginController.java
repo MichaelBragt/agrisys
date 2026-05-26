@@ -6,7 +6,6 @@ import com.agrisys.datalayer.dao.AppUserDAO;
 import com.agrisys.datalayer.entity.AppUserRecord;
 import com.agrisys.model.UserSession;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;

@@ -18,6 +18,10 @@ import java.time.LocalDateTime;
  * Service orchestrator for registering a new pig.
  * Handles multi-table transaction involving Pig, Responder, Assignment, and Location.
  */
+
+// Primær forfatter: Michael Bragt
+// Sporbarhed: PS-02 | FR-02
+
 public class PigRegistrationService {
     private final PigDAO pigDAO = new PigDAO();
     private final RespondersDAO respondersDAO = new RespondersDAO();

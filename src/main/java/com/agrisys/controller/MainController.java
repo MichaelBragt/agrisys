@@ -26,18 +26,13 @@ import java.util.logging.Logger;
 /**
  * Orchestrator for the main application shell.
  * Handles top-level navigation and global application state.
+ *
  */
 public class MainController {
     private static final Logger LOGGER = Logger.getLogger(MainController.class.getName());
 
     public void initialize() {
         // Initialization logic for the TabPane shell
-
-        // Just a line used for testing db connection
-        // is to be removed
-        System.out.println("Before D");
-        DbConnect connection = DbConnect.UNIQUE_CONNECT;
-        System.out.println("Before D");
     }
 
     @FXML

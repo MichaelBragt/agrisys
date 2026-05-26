@@ -2,11 +2,12 @@ package com.agrisys.service;
 
 import com.agrisys.DbConnect;
 import com.agrisys.datalayer.dao.*;
+import com.agrisys.datalayer.entity.LocationRecord;
 import com.agrisys.datalayer.entity.PigLocationRecord;
+import com.agrisys.datalayer.entity.PptDataRecord;
 import com.agrisys.datalayer.entity.ResponderAssignmentRecord;
 import com.agrisys.dto.excel.ExcelImportDTO;
-import com.agrisys.datalayer.entity.LocationRecord;
-import com.agrisys.datalayer.entity.PptDataRecord;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,12 +16,15 @@ import java.util.List;
 import java.util.logging.Logger;
 
 // Primær forfatter: Michael Bragt
+// Sporbarhed: PS-03 | FR-01
 
 /**
  * Orchestrator service for importing Excel data into the 3NF database schema.
  * Handles multi-table inserts and transactional integrity (PS-03).
  */
 public class ExcelDataToDatabaseService {
+
+    // We instantiate a Logger IF we want to log stuff in dev phase
     private static final Logger LOGGER = Logger.getLogger(ExcelDataToDatabaseService.class.getName());
 
     public record ImportResult(int insertedCount, int skippedCount) {}
@@ -45,6 +49,8 @@ public class ExcelDataToDatabaseService {
         int insertedRows = 0;
         
         try {
+            // We log to devs that excel import is started
+            LOGGER.info("LOGGER: Starter Excel import: " + importData.size() + " rows.");
             conn.setAutoCommit(false); // Begin Transaction
 
             for (ExcelImportDTO dto : importData) {

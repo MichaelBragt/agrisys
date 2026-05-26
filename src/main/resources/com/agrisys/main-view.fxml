@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!--
+Primær forfatter: Michael Bragt
+Sporbarhed: PS-01 (UI)
+-->
+
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
