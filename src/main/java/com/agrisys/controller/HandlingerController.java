@@ -18,43 +18,47 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Controller for managing data filtering, CSV exports, and warehouse utilities.
- * Acts as the centralized management grid for the agricultural operators.
+ * Controller til styring af datafiltrering, CSV-eksport og administrative staldværktøjer.
+ * Fungerer som det centrale kontrolpanel for staldpersonalet og rådgivere.
  * * @author Eirik (og gruppen)
- * @see "Requirement 2.2: Landmanden og rådgiveren kan filtrere i data for hele besætningen"
- * @see "Requirement 2.2: En administrator (eller autoriseret landmand) kan eksportere data til en CSV-fil"
- * @see "Requirement 2.2: Rollebaseret autorisation - Rådgivere må ikke administrere stalddata"
+ * @see "PS-01, PS-02, PS-03, PS-04"
+ * @see "FR-06: Systemet skal kunne filtrere besætningen i en liste for fokuseret overblik"
+ * @see "FR-07: Administration skal kunne eksportere analyser og data til en CSV-fil"
+ * @see "FR-15: Rådgiver-interfacet skal være begrænset til Read-only på grisens stamdata"
+ * @see "FR-18: Navigation - Dobbeltklik-genvej til griseprofil"
+ * @see "NFR-02: Systemet skal opbygges i en lagdelt arkitektur (UI, Logik, Data)"
+ * @see "NFR-03: Performance - Søgning og filtrering i 1000+ grise skal ske på under 1 sekund"
  */
 
 public class HandlingerController {
 
     @FXML private TableView<PigSummary> tableView;
 
-    // Filter controls
+    // Filter-komponenter til UI (Understøtter FR-06)
     @FXML private TextField filterLocationField;
     @FXML private TextField filterMinWeightField;
     @FXML private TextField filterMaxWeightField;
     @FXML private TextField filterFcrField;
-    // Management action buttons (Targeted for Role-Based Access Control)
+    // Staldstyrings-knapper underlagt adgangsstyring (Understøtter FR-15)
     @FXML private Button btnRegisterPig;
     @FXML private Button btnRegisterLocation;
     @FXML private Button btnImportData;
-    // Core application services
+    // Lagdelt arkitektur: Data hentes via services og DAOs (Opfylder NFR-02)
     private final CsvExportService csvExportService = new CsvExportService();
     private final PigDAO pigDAO = new PigDAO();
     private final com.agrisys.service.ExcelParserService parserService = new com.agrisys.service.ExcelParserService();
     private final com.agrisys.service.ExcelDataToDatabaseService excelDataToDatabaseService = new com.agrisys.service.ExcelDataToDatabaseService();
 
-    // Data-bindings for dynamic UI filtering without dropping database records
+    // Data-bindings (Observable og Filtered for lynhurtig filtrering i RAM jf. NFR-03)
     private final ObservableList<PigSummary> masterPigList = FXCollections.observableArrayList();
     private FilteredList<PigSummary> filteredPigList;
 
     @FXML
     public void initialize() {
-        // 1. Tillad multi-selection
+        // Multi-selection muliggør eksport af specifikke valgte rækker (FR-07)
         tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        // 2. Definer kolonner via Lambda (Sikrer jeres Records virker)
+        // Kolonner bindes til egenskaber på PigSummary Record
         TableColumn<PigSummary, String> colAnimalNum = new TableColumn<>("Dyre Nr.");
         colAnimalNum.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().animalNumber()));
 
@@ -74,21 +78,21 @@ public class HandlingerController {
         tableView.getColumns().clear();
         tableView.getColumns().addAll(colAnimalNum, colResponder, colLocation, colWeight, colFcr);
 
-        // 3. Kobl FilteredList OG SortedList sammen, så sortering på kolonner virker altid!
+        // Indpakning i FilteredList og SortedList muliggør lynhurtig filtrering under 1 sekund (NFR-03)
         filteredPigList = new FilteredList<>(masterPigList, p -> true);
         javafx.collections.transformation.SortedList<PigSummary> sortedPigList = new javafx.collections.transformation.SortedList<>(filteredPigList);
-
-        // Bind tabellens sortering op på den sorterede liste
         sortedPigList.comparatorProperty().bind(tableView.comparatorProperty());
         tableView.setItems(sortedPigList);
-        // 4. Lyt efter ændringer i filter-felterne (Opdaterer tabellen dynamisk mens man skriver!)
+
+
+        // Reaktive lyttere opfylder FR-06 ved live-filtrering under indtastning
         filterLocationField.textProperty().addListener((obs, oldVal, newVal) -> updateFilters());
         filterMinWeightField.textProperty().addListener((obs, oldVal, newVal) -> updateFilters());
         filterMaxWeightField.textProperty().addListener((obs, oldVal, newVal) -> updateFilters());
 
-        // 5. Hent data live fra DB
+        // Hent data via datalaget (NFR-02)
         loadPigData();
-        // Lyt efter dobbeltklik på en række i tabellen for at åbne detalje-view
+        // Implementering af dobbeltklik-genvej til profilvisning (Opfylder FR-18 og PS-01)
         tableView.setRowFactory(tv -> {
             TableRow<PigSummary> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
@@ -105,11 +109,11 @@ public class HandlingerController {
         filterFcrField.textProperty().addListener((obs, oldVal, newVal) -> updateFilters());
 
         // =========================================================================
-        // SIKKER ADGANGSSTYRING FOR RÅDGIVER (Placeret i bunden af initialize)
+        // AUTORISATION & ROLLEBASERET ADGANGSSTYRING (PS-02 / FR-15)
         // =========================================================================
         if (com.agrisys.model.UserSession.getInstance().isRaadgiver()) {
 
-            // 1. Skjul staldstyrings-knapperne (De eksisterende tjek)
+            // Hvis brugeren er rådgiver, skjules staldstyringsværktøjer og import (FR-15)
             if (btnRegisterPig != null) { // Bemærk: Ret navnet hvis den hedder btnRegistrerNyGris i din Java-kode
                 btnRegisterPig.setVisible(false);
                 btnRegisterPig.setManaged(false);
@@ -135,10 +139,7 @@ public class HandlingerController {
 
 
     /**
-     * Kernen i filtreringen: Evaluerer hver enkelt gris mod landmandens indtastede værdier.
-     */
-    /**
-     * Kernen i filtreringen: Evaluerer hver enkelt gris mod sti, vægt OG FCR.
+     * Evaluerer matematiske prædikater i RAM jf. NFR-03 for lynhurtig filtrering (FR-06).
      */
     private void updateFilters() {
         filteredPigList.setPredicate(pig -> {
@@ -176,7 +177,7 @@ public class HandlingerController {
                 } catch (NumberFormatException e) { }
             }
 
-            // --- NYT FILTER 4: FCR (Vis grise med FCR under eller lig med input) ---
+            // Filter: FCR Grænseværdi (Udvidet analysefilter jf. FR-06)
             String fcrInput = filterFcrField.getText();
             if (fcrInput != null && !fcrInput.trim().isEmpty()) {
                 try {
@@ -209,9 +210,7 @@ public class HandlingerController {
         }
     }
 
-    /**
-     * Eksporterer alle grise, der overholder de nuværende filtre på skærmen.
-     */
+    // Handlinger til dataeksport til CSV-filer (Opfylder FR-07 og PS-04)
     @FXML
     private void handleExportAllCsv() {
         Stage stage = (Stage) tableView.getScene().getWindow();
@@ -249,9 +248,7 @@ public class HandlingerController {
         csvExportService.exportPigSummariesToCsv(stage, markeredeGrise);
     }
 
-    /**
-     * Åbner dialogen til oprettelse af en ny gris (Krav: Oprette og indsætte en gris).
-     */
+    // Åbner eksterne dialogvinduer (Understøtter FR-02 og FR-19)
     @FXML
     private void handleOpenPigRegistration() {
         try {
@@ -297,7 +294,7 @@ public class HandlingerController {
     }
 
     /**
-     * Åbner popup-modalen med detaljerede grafer og CRUD-indstillinger for det valgte dyr.
+     * Åbner profilvisning (Genvej via dobbeltklik understøtter FR-18)
      */
     private void handleOpenDetailView(PigSummary selectedPig) {
         try {
@@ -326,7 +323,7 @@ public class HandlingerController {
     }
 
     /**
-     * Håndterer fil-upload og synkronisering af eksterne PPT-målinger (Krav: Excel-import).
+     * Import af PPT Excel-filer (Opfylder FR-01 og PS-03)
      */
     @FXML
     private void handleImportAction() { // Kaldes fra fx:onAction="#handleImportCsv" i FXML
