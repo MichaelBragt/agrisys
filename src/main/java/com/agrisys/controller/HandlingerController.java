@@ -173,7 +173,7 @@ public class HandlingerController {
                 } catch (NumberFormatException e) { }
             }
 
-            // --- NYT FILTER 4: FCR (Vis grise med FCR over eller lig med input) ---
+            // --- NYT FILTER 4: FCR (Vis grise med FCR under eller lig med input) ---
             String fcrInput = filterFcrField.getText();
             if (fcrInput != null && !fcrInput.trim().isEmpty()) {
                 try {

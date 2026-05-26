@@ -36,6 +36,9 @@ public class CsvExportService {
         if (file != null) {
             // Tving UTF-8 med BOM, så Excel åbner danske bogstaver (ø) helt perfekt med det samme
             try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
+
+                // 1. TILFØJ DENNE LINJE: Fortæller Excel direkte, at vi adskiller med semikolon
+                writer.println("sep=;");
                 // Skriv CSV Header. Vi bruger semikolon (;), da danske Excel foretrækker det!
                 writer.println("DyreNummer;ResponderID;LokationID;Foedselsdato;SenesteVaegtKG;FCR");
 
