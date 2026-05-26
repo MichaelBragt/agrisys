@@ -20,7 +20,12 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Controller for the Pig Detail popup..
+ * Controller for the Pig Detail popup modal.
+ * Implements full Read, Update, and Soft-Delete operations for individual animal records.
+ * * @author [Gruppemedlem]
+ * @see "Requirement 2.2 (UC): Rette en gris (Stamdata, gruppe, lokation og foderindstillinger)"
+ * @see "Requirement 2.2 (UC): Stoppe registrering af en gris (f.eks. ved sygdom eller skade)"
+ * @see "Requirement 2.2 (UC): Vist data og hændelser for en gris (Vægt, spiseaktivitet, individuel FCR)"
  */
 public class PigDetailController {
     // Declaring varous UI elements

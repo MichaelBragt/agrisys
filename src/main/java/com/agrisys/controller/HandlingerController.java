@@ -13,37 +13,40 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
 import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Controller for managing data filtering, CSV exports, and warehouse utilities.
+ * Acts as the centralized management grid for the agricultural operators.
+ * * @author Eirik (og gruppen)
+ * @see "Requirement 2.2: Landmanden og rådgiveren kan filtrere i data for hele besætningen"
+ * @see "Requirement 2.2: En administrator (eller autoriseret landmand) kan eksportere data til en CSV-fil"
+ * @see "Requirement 2.2: Rollebaseret autorisation - Rådgivere må ikke administrere stalddata"
+ */
+
 public class HandlingerController {
 
-    @FXML
-    private TableView<PigSummary> tableView;
+    @FXML private TableView<PigSummary> tableView;
 
-    // De nye filter-komponenter fra FXML
-    @FXML
-    private TextField filterLocationField;
-    @FXML
-    private TextField filterMinWeightField;
-    @FXML
-    private TextField filterMaxWeightField;
-    @FXML
-    private TextField filterFcrField;
-    @FXML    private Button btnRegisterPig;        // Sørg for at disse fx:id matcher jeres handlinger FXML!
-    @FXML    private Button btnRegisterLocation;
-    @FXML    private Button btnImportData;
-
+    // Filter controls
+    @FXML private TextField filterLocationField;
+    @FXML private TextField filterMinWeightField;
+    @FXML private TextField filterMaxWeightField;
+    @FXML private TextField filterFcrField;
+    // Management action buttons (Targeted for Role-Based Access Control)
+    @FXML private Button btnRegisterPig;
+    @FXML private Button btnRegisterLocation;
+    @FXML private Button btnImportData;
+    // Core application services
     private final CsvExportService csvExportService = new CsvExportService();
     private final PigDAO pigDAO = new PigDAO();
     private final com.agrisys.service.ExcelParserService parserService = new com.agrisys.service.ExcelParserService();
     private final com.agrisys.service.ExcelDataToDatabaseService excelDataToDatabaseService = new com.agrisys.service.ExcelDataToDatabaseService();
 
-    // Master-listen med alle 24+ grise fra databasen
+    // Data-bindings for dynamic UI filtering without dropping database records
     private final ObservableList<PigSummary> masterPigList = FXCollections.observableArrayList();
-    // FilteredList der pakker master-listen ind og styrer hvad der vises
     private FilteredList<PigSummary> filteredPigList;
 
     @FXML
@@ -190,6 +193,9 @@ public class HandlingerController {
         });
     }
 
+    /**
+     * Synkroniserer master-listen ved at hente opdaterede summaries fra databaselaget.
+     */
     private void loadPigData() {
         try {
             masterPigList.clear();
@@ -203,6 +209,9 @@ public class HandlingerController {
         }
     }
 
+    /**
+     * Eksporterer alle grise, der overholder de nuværende filtre på skærmen.
+     */
     @FXML
     private void handleExportAllCsv() {
         Stage stage = (Stage) tableView.getScene().getWindow();
@@ -210,6 +219,9 @@ public class HandlingerController {
         csvExportService.exportPigSummariesToCsv(stage, filteredPigList);
     }
 
+    /**
+     * Validerer og eksporterer data specifikt for den valgte sti/lokation.
+     */
     @FXML
     private void handleExportLocationCsv() {
         String locationInput = filterLocationField.getText();
@@ -222,6 +234,9 @@ public class HandlingerController {
         csvExportService.exportPigSummariesToCsv(stage, filteredPigList);
     }
 
+    /**
+     * Eksporterer udelukkende de rækker, som landmanden manuelt har markeret i tabellen.
+     */
     @FXML
     private void handleExportSelectedCsv() {
         Stage stage = (Stage) tableView.getScene().getWindow();
@@ -234,6 +249,9 @@ public class HandlingerController {
         csvExportService.exportPigSummariesToCsv(stage, markeredeGrise);
     }
 
+    /**
+     * Åbner dialogen til oprettelse af en ny gris (Krav: Oprette og indsætte en gris).
+     */
     @FXML
     private void handleOpenPigRegistration() {
         try {
@@ -258,7 +276,7 @@ public class HandlingerController {
     }
 
     /**
-     * Åbner lokationsstyringsvinduet.
+     * Åbner det eksterne administrationsmodul til oprettelse/redigering af stier.
      */
     @FXML
     private void handleOpenLocations() {
@@ -279,7 +297,7 @@ public class HandlingerController {
     }
 
     /**
-     * Åbner det detaljerede view for en specifik gris, præcis som i PigsController.
+     * Åbner popup-modalen med detaljerede grafer og CRUD-indstillinger for det valgte dyr.
      */
     private void handleOpenDetailView(PigSummary selectedPig) {
         try {
@@ -307,6 +325,9 @@ public class HandlingerController {
         }
     }
 
+    /**
+     * Håndterer fil-upload og synkronisering af eksterne PPT-målinger (Krav: Excel-import).
+     */
     @FXML
     private void handleImportAction() { // Kaldes fra fx:onAction="#handleImportCsv" i FXML
         FileChooser fileChooser = new FileChooser();

@@ -8,9 +8,12 @@ import java.io.PrintWriter;
 import java.util.List;
 
 /**
- * Service ansvarlig for eksport af grisemålinger og stamdata til CSV-filer.
- * Primær forfatter: Eirik (og Maria)
+ * Service responsible for formatting and exporting consolidated herd metrics
+ * into Excel-compliant CSV files using localized separators.
+ * * @author Eirik (og Maria)
+ * @see "Requirement 2.2 (UC): En administrator kan eksportere data og analyser til en CSV-fil"
  */
+
 public class CsvExportService {
 
     /**
