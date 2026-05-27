@@ -33,9 +33,19 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Controller til styring af griseoversigten og det tilhørende vækstdashboard.
+ * Kobler den visuelle præsentation sammen med de biologiske analysealgoritmer.
+ * * @author Michael Bragt og Eirik Pran
+ * @see "PS-01: Datavisualisering - Transformation af rådata til dashboards"
+ * @see "FR-10: Systemet skal præsentere vækst- og foderdata via et Vækst Dashboard med grafer"
+ * @see "FR-18: Navigation - Genvej via dobbeltklik til profil"
+ * @see "NFR-01: Usability - Landmanden skal kunne tilgå en vækstkurve med maks. 3 klik"
+ */
+
 public class PigsController {
 
-    // We declare table column types and datatypes here
+    // JavaFX Tabel- og kolonnekomponenter til populationsoversigten
     @FXML private TableView<PigSummary> pigTable;
     @FXML private TableColumn<PigSummary, String> colAnimalNumber;
     @FXML private TableColumn<PigSummary, String> colResponder;
@@ -44,39 +54,49 @@ public class PigsController {
     @FXML private TableColumn<PigSummary, Double> colWeight;
     @FXML private TableColumn<PigSummary, Double> colFCR;
 
+    // Dropdown og handlingsknapper
     @FXML private ComboBox<LocationRecord> locationSelector; 
     @FXML private Button btnRegisterPig;
     @FXML private Button btnRegisterLocation;
 
-    // De to containere i højre side
+    // UI-containere til grafer og gauges (Opfylder FR-10 og PS-01)
     @FXML private StackPane chartContainer;
     @FXML private StackPane gaugeContainer2;
     @FXML private StackPane weightChartContainer;
 
+    // Applikationsservices til datahåndtering
     private final PigService pigService;
     private final ChartService chartService;
     private final LocationService locationService; // New service for locations
     private final ObservableList<PigSummary> pigSummaries = FXCollections.observableArrayList();
 
+    /**
+     * Constructor initialiserer de nødvendige domæneservices.
+     */
     public PigsController() {
         this.pigService = new PigService();
         this.chartService = new ChartService();
         this.locationService = new LocationService(); // Initialize LocationService
     }
 
+    /**
+     * initialize kaldes automatisk af JavaFX, når fanebladet indlæses.
+     * Konfigurerer tabellen, dropdown-menuen og håndterer rettighedsstyring.
+     */
     @FXML
     public void initialize() {
-        // initialize is a javafx special function that it called once
-        // when the view is loaded, here we setup the table and load the data
+
+        // 1. Klargør tabelkolonner og databindinger
         setupTable();
-        loadLocations(); // Load locations into the ComboBox
-        
-        // Implementering af StringConverter så dropdown viser ID i stedet for navn
+        // 2. Hent alle tilgængelige stier/lokationer ind i dropdown-menuen
+        loadLocations();
+
+        // 3. Konfigurer en StringConverter, så ComboBoxen viser rå id-numre eller "Alle" i stedet for objektnave
         locationSelector.setConverter(new StringConverter<>() {
             @Override
             public String toString(LocationRecord loc) {
                 if (loc == null) return "";
-                // Hvis det er vores dummy "Alle" (ID 0), vis teksten "Alle"
+                // Hvis lokationen er vores dummy-objekt med ID 0, vises teksten "Alle"
                 return (loc.locationId() == 0) ? "Alle" : String.valueOf(loc.locationId());
             }
 
@@ -86,22 +106,23 @@ public class PigsController {
             }
         });
 
-        // Add listener for location selection changes
+        // Lokationsfiltrering jf. FR-06
         locationSelector.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            // If newVal is null (e.g., ComboBox cleared), treat as "All Locations" (null ID)
+            // Hvis newVal er null, betragtes det som "Alle lokationer" (null sendes til service)
             refreshPigData(newVal != null ? newVal.locationId() : null);
         });
 
-        // Default selection: "Alle Lokationer" (our special ID 0)
+        // 5. Sæt standardvalget i dropdown-menuen til "Alle" (vores specielle ID 0)
         if (!locationSelector.getItems().isEmpty()) {
             locationSelector.getSelectionModel().selectFirst();
         } else {
-            // Fallback if no locations are found, still load all pig data
+            // Fallback hvis der mod forventning overhovedet ingen stier findes i databasen
             refreshPigData(null);
         }
 
+        // Rollebaseret adgangsstyring (Autorisation jf. FR-15 og PS-02)
         if (com.agrisys.model.UserSession.getInstance().isRaadgiver()) {
-            // Vi gør knapperne usynlige og fjerner dem fra layout-beregningen
+            // Skjul og fjern staldstyringsværktøjer fuldstændig, hvis brugeren er Rådgiver
             btnRegisterPig.setVisible(false);
             btnRegisterPig.setManaged(false);
 
@@ -113,10 +134,10 @@ public class PigsController {
     }
 
     /**
-     * Here we setup the table according to the pig summary DTO so our
-     * table fits the data it will present in the UI
+     * Konfigurerer tabellens cell value factories og tilknytter dobbeltklik-lytteren.
      */
     private void setupTable() {
+        // Map kolonner til PigSummary Java Record egenskaberne ved brug af ReadOnly wrappers
         colAnimalNumber.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().animalNumber()));
         colResponder.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().responderId()));
         colLocation.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().locationId()));
@@ -130,6 +151,7 @@ public class PigsController {
 
         // Here we implement functionality to double-click a row in the table (PS-01)
         // for opening a detailed view for the pig in the selected row
+        // Dobbeltklik-genvej til griseprofil (Opfylder FR-18 og NFR-01: Vækstkurve inden for 2 klik!)
         pigTable.setRowFactory(tv -> {
             javafx.scene.control.TableRow<PigSummary> row = new javafx.scene.control.TableRow<>();
             row.setOnMouseClicked(event -> {
@@ -145,7 +167,7 @@ public class PigsController {
     }
 
     /**
-     * Loads all available locations into the ComboBox, including an "All Locations" option.
+     * Indlæser stier fra databasen og tilføjer et kunstigt "Alle Lokationer"-element i toppen.
      */
     private void loadLocations() {
         List<LocationRecord> locs = new ArrayList<>();
@@ -156,8 +178,7 @@ public class PigsController {
     }
 
     /**
-     * Refreshes the pig table, charts, and gauge based on the selected location.
-     * @param selectedLocationId The ID of the selected location, or null for all pigs.
+     * Opdaterer grafer og tabeller asynkront (Understøtter FR-10 Vækst Dashboard og PS-01)
      */
     private void refreshPigData(Integer selectedLocationId) {
         // Map our special ID 0 ("Alle Lokationer") to null for service calls
@@ -179,6 +200,10 @@ public class PigsController {
         });
     }
 
+
+    /**
+     * Præsenterer FCR-tendenser grafisk (Opfylder FR-10 / PS-01)
+     */
     private void readPopulationGraph(Integer locationId) throws SQLException {
         try {
         ChartSeriesData fcrData = chartService.getFcrTrend(locationId); // Pass locationId
@@ -201,7 +226,7 @@ public class PigsController {
     }
 
     /**
-     * Tegner måleren i bunden af højre side
+     * Viser akkumuleret effektivitetsmåling live via tilpasset Gauge-komponent (PS-01)
      */
     private void showStatusGauge(Integer locationId) throws SQLException {
         try {
@@ -228,6 +253,9 @@ public class PigsController {
         }
     }
 
+    /**
+     * Åbner den individuelle griseprofil (Opfylder FR-05 samt NFR-01 via direkte sti)
+     */
     private void handleOpenDetailView(PigSummary selectedPig) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/agrisys/pig-detail-view.fxml"));
@@ -251,6 +279,7 @@ public class PigsController {
         }
     }
 
+    // Oprettelseshandlinger (Understøtter FR-02 og FR-19)
     @FXML
     private void handleOpenRegistration() {
         try {
@@ -274,6 +303,9 @@ public class PigsController {
         }
     }
 
+    /**
+     * Åbner dialogen til oprettelse og vedligeholdelse af fysiske stier/lokationer.
+     */
     @FXML
     private void handleOpenLocations() {
         try {
@@ -314,7 +346,7 @@ public class PigsController {
     }
 
     /**
-     * Loads and displays the average weight trend graph for the selected location or all pigs.
+     * Præsenterer den overordnede gennemsnitlige vægtudviklingstrend (FR-10 Vækst Dashboard)
      */
     private void readWeightGraph(Integer locationId) throws SQLException {
         try {

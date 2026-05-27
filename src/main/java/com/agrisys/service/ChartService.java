@@ -10,6 +10,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Eirik Pran
+ * @see "PS-01"
+ * @see "FR-05: Systemet skal vise vægt- og spise aktivitet for en specifik gris."
+ * @see "FR-10: Systemet skal præsentere vækst- og foderdata via et “Vækst Dashboard” med grafer."
+ */
 public class ChartService {
 
     /**
@@ -31,7 +37,7 @@ public class ChartService {
         
         String dateFilterPrefix = (locationId == null) ? " WHERE " : "";
 
-        // grisenes forventede daglige tilvækst (1000g pr. gris om dagen).
+        // pigs estimated daily growth (1000g pr. pig per day).
         // CONVERT (style 120) corresponds to ODBC yyy-mm-dd hh:mi:ss
         // by converting to varchar(10) we strip of the time portion
         // effectively leaving us with only the dates
@@ -63,16 +69,12 @@ public class ChartService {
                 String dato = rs.getString("Dato");
                 double fcr = rs.getDouble("BeregnetFCR");
 
-                // Afrund til 2 decimaler (f.eks. 2.94)
+                // round of to 2 decimals
                 fcr = Math.round(fcr * 100.0) / 100.0;
 
-                // Vi filtrerer den sidste dag fra, hvis den kun indeholder halve data (f.eks. pga. eksport-tidspunkt)
-                // nope den filtrere bare fcr værdier under 1 og over 6 fra..
-                // to be deleted later, skal bare add'e punkterne
-                // sidste dato er filtreret i sql'en :-)
-//                if (fcr > 1.0 && fcr < 6.0) {
-                    punkter.add(new ChartPoint(dato, fcr));
-//                }
+                // We add the points
+                punkter.add(new ChartPoint(dato, fcr));
+
             }
         }
 

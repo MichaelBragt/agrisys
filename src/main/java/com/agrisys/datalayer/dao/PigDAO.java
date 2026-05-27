@@ -9,15 +9,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// Primær forfatter: Michael Bragt
-
 /**
- * DAO for Pig table. Implements CRUD for biological data.
+ * Data Access Object (DAO) for Pig-tabellen.
+ * Håndterer de basale CRUD-operationer samt komplekse databaserelaterede aggregeringer (OUTER APPLY)
+ * til besætningsovervågning og biologiske algoritmer.
+ * * @author Michael Bragt (med kommentarer af gruppen)
+ * @see "PS-01: Datavisualisering - Aggregering af rådata til dashboards"
+ * @see "PS-02: Adgangsstyring - Persistering af biologiske CRUD-ændringer"
+ * @see "PS-03: Interoperabilitet - Integration og fejlsikring af rå IoT-sensordata"
+ * @see "FR-02: Landmanden skal kunne oprette/indsætte en ny gris med stamdata"
+ * @see "FR-09: Systemet skal automatisk beregne FCR og Gennemsnitlig Daglig Tilvækst (ADG)"
+ * @see "NFR-04: Reliability - Databasen skal sikre Referential Integrity via FK-constraints"
  */
 public class PigDAO {
 
     /**
-     * Ensures a pig exists in the database. If it doesn't, it creates it.
+     * Sikrer, at en gris eksisterer i databasen under Excel-import (FR-01 / FR-14).
+     * Hvis dyrenummeret ikke findes i forvejen, oprettes der automatisk en basis-record.
      */
     public void ensureExists(Connection conn, String animalNumber) throws SQLException {
         String checkSql = "SELECT 1 FROM Pig WHERE animal_number = ?";
@@ -36,10 +44,9 @@ public class PigDAO {
     }
 
     /**
-     * Persists a new Pig record.
-     * @param conn Active connection for transaction.
-     * @param pig The pig record to save.
-     * @throws SQLException On database error.
+     * Opretter og gemmer en helt ny gris live i databasen (Udfører FR-02).
+     * @param conn Aktiv databaseforbindelse til transaktionshåndtering.
+     * @param pig Den PigRecord entitet, der skal persisteres.
      */
     public void create(Connection conn, PigRecord pig) throws SQLException {
         String sql = "INSERT INTO Pig (animal_number, birth_date, status) VALUES (?, ?, ?)";
@@ -51,6 +58,9 @@ public class PigDAO {
         }
     }
 
+    /**
+     * Finder en specifik gris baseret på dens unikke 6-cifrede dyrenummer.
+     */
     public Optional<PigRecord> findByAnimalNumber(String animalNumber) throws SQLException {
         String sql = "SELECT animal_number, birth_date, status FROM Pig WHERE animal_number = ?";
         Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
@@ -65,6 +75,9 @@ public class PigDAO {
         return Optional.empty();
     }
 
+    /**
+     * Henter en komplet liste over alle grise i stalden, som har status 'Aktiv'.
+     */
     public List<PigRecord> findAllActive() throws SQLException {
         List<PigRecord> pigs = new ArrayList<>();
         String sql = "SELECT animal_number, birth_date, status FROM Pig WHERE status = 'Aktiv'";
@@ -78,6 +91,9 @@ public class PigDAO {
         return pigs;
     }
 
+    /**
+     * Privat hjælpemetode til at mappe en række fra ResultSet over i et uforanderligt PigRecord-objekt.
+     */
     private PigRecord map(ResultSet rs) throws SQLException {
         Date birth = rs.getDate("birth_date");
         return new PigRecord(
@@ -88,9 +104,10 @@ public class PigDAO {
     }
 
     /**
-     * Fetches aggregated summary data for all active pigs.
-     * Uses OUTER APPLY for both the latest and the earliest measurements to ensure
-     * a rock-solid, biologically accurate FCR calculation based on true growth.
+     * Henter akkumulerede og beregnede data for hele besætningen (Home- & Handlinger-tabeller).
+     * Anvender T-SQL OUTER APPLY til lynhurtigt at fange de absolut nyeste og tidligste vægt-logs,
+     * hvilket muliggør en præcis, biologisk FCR-beregning direkte i databaselaget (Opfylder FR-09).
+     * @see "FR-09: "Systemet skal automatisk beregne FCR og Gennemsnitlig Daglig Tilvækst (ADG)"
      */
     public List<PigSummary> getPigSummaries() throws SQLException {
         List<PigSummary> summaries = new ArrayList<>();
@@ -132,6 +149,7 @@ public class PigDAO {
                 // RETTET: Trækker status ud af ResultSet, så den eksisterer som variabel
                 String status = rs.getString("status");
 
+                // Opsaml vægttal i rå gram fra IoT-sensorerne
                 double rawLatestWeight = rs.getDouble("latest_weight");
                 double rawStartWeight = rs.getDouble("start_weight");
                 double totalFeedGrams = rs.getDouble("total_feed");
@@ -140,11 +158,14 @@ public class PigDAO {
                 double growthGrams = rawLatestWeight - rawStartWeight;
                 double fcr = 0.0;
 
+                // --- BIOLOGISK BEREGNINGS-ALGORITME (Opfylder FR-09 / Domæneregel 1.2) ---
+                // FCR = Total foderindtag divideret med den reelle vækst (tilvækst) i stalden
                 if (totalFeedGrams > 0 && growthGrams > 1000) {
                     fcr = totalFeedGrams / growthGrams;
                     fcr = Math.round(fcr * 100.0) / 100.0;
                 }
 
+                // Ekstremværdifiltrering: Hvis FCR er urealistisk lav eller høj, sættes den til 0.0 (Data-validering)
                 if (fcr < 1.0 || fcr > 5.0) {
                     fcr = 0.0;
                 }
@@ -164,7 +185,8 @@ public class PigDAO {
     }
 
     /**
-     * RETTET: Henter lokationsspecifik data med korrekte aliasser samt fuld FCR beregning!
+     * Henter lokationsspecifikke summaries (Pigs-tabellens dropdown-filtrering jf. FR-06).
+     * Inkluderer fuld on-the-fly FCR-beregning for den specifikke sti/boks (FR-19 / FR-20).
      */
     public List<PigSummary> getPigSummariesByLocation(int locationId) throws SQLException {
         List<PigSummary> summaries = new ArrayList<>();
@@ -239,7 +261,8 @@ public class PigDAO {
     }
 
     /**
-     * Fetches full details for a specific pig, including the active responder and location.
+     * Henter de absolutte detaljer, vægtgrænser og akkumulerede foder-mængder for en enkelt gris.
+     * Forsyner jeres PigDetailController med alt nødvendigt datagrundlag (FR-05 / FR-09).
      */
     public Optional<PigDetailDTO> getPigDetail(String animalNumber) throws SQLException {
         String sql = """

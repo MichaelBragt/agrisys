@@ -3,10 +3,10 @@ package com.agrisys.config;
 /**
  * Centralized Application Configuration.
  * Provides structural constants for the UI and operational keys for environment variables.
- * 
- * Following Pressman's "Design for Change," using a centralized config allows for
- * global UI adjustments without refactoring the view logic.
- */
+ *
+ * Primær forfatter: Michael Bragt
+ **/
+
 public final class AppConfig {
     // Private constructor to prevent instantiation
     private AppConfig() {}

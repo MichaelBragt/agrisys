@@ -24,22 +24,27 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Orchestrator for the main application shell.
- * Handles top-level navigation and global application state.
+ * Orchestrator og controller for applikationens hovedskal (Application Shell).
+ * Håndterer overordnet top-level navigation, globale dialogbokse og sikker nedlukning af brugersessioner.
+ * * @author Eirik Pran og Maria Alazzawi og Michael Bragt
+ * @see "PS-02: Adgangsstyring - Session Management og rettigheds-destruktion"
+ * @see "FR-18: Navigation - Implementering af intuitiv home-, dialog- og tilbage-navigation"
+ * @see "NFR-02: Architecture - Fungerer som præsentationslagets overordnede ramme (UI Shell)"
  */
 public class MainController {
     private static final Logger LOGGER = Logger.getLogger(MainController.class.getName());
 
+    /**
+     * initialize kaldes automatisk af JavaFX, når hovedskallen (f.eks. med TabPane) indlæses i RAM.
+     */
     public void initialize() {
         // Initialization logic for the TabPane shell
-
-        // Just a line used for testing db connection
-        // is to be removed
-        System.out.println("Before D");
-        DbConnect connection = DbConnect.UNIQUE_CONNECT;
-        System.out.println("Before D");
     }
 
+    /**
+     * Åbner en global dialogboks, der præsenterer den loggede brugers profiloplysninger og rettigheder.
+     * Trækker informationer live fra jeres sessions-singleton jf. PS-02.
+     */
     @FXML
     private void handleProfile() {
         try {
@@ -67,6 +72,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Håndterer log-ud flowet. Sikrer komplet destruktion af sessionsdata (Session Invalidation),
+     * før scenegrafen kastes tilbage til login-skærmen (Udfører FR-08 og FR-18).
+     */
     @FXML
     private void handleLogout(ActionEvent event) {
         try {
@@ -84,6 +93,9 @@ public class MainController {
         }
     }
 
+    /**
+     * Privat hjælpemetode til generisk indlæsning af dialog-ressourcer jf. "Don't Repeat Yourself" (DRY).
+     */
     private Dialog<ButtonType> loadDialog(String fileName) throws IOException {
         URL dialogResource = Objects.requireNonNull(getClass().getResource("/com/agrisys/" + fileName));
         return FXMLLoader.load(dialogResource);

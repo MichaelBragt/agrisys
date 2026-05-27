@@ -1,5 +1,14 @@
 package com.agrisys.datalayer.dao;
 
+/**
+ * Data Access Object (DAO) for PPT_Data-tabellen.
+ * Ansvarlig for bulk-indsættelse og lagring af rå IoT-sensormålinger fra staldens foderautomater.
+ * * @author Michael Bragt
+ * @see "PS-03: Interoperabilitet - Strukturering og persistens af store sensordataset"
+ * @see "FR-01: Systemet skal importere data fra Excel-filer til MSSQL-databasen"
+ * @see "NFR-04: Reliability - Sikring af referentiel integritet (Foreign Keys) mod tildelte respondere"
+ */
+
 import com.agrisys.DbConnect;
 import com.agrisys.datalayer.entity.PptDataRecord;
 import com.agrisys.dto.chart.ChartPoint;

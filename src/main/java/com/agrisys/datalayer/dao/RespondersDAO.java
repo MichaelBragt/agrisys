@@ -7,7 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// Primær forfatter: Michael Bragt
+/**
+ * Data Access Object (DAO) for Responders-tabellen.
+ * Varetager administrationen af staldens fysiske RFID-øremærker og tracker deres aktuelle status.
+ * * @author Michael Bragt
+ * @see "PS-02: Adgangsstyring - Allokering og frigivelse af fysiske hardware-komponenter"
+ * @see "FR-02: Landmanden skal kunne oprette/indsætte en ny gris med tilknyttet hardware"
+ * @see "Domain Rule 1.2: Filtrering og validering af uallokerede, ledige respondere i lagersystemet"
+ */
 
 /**
  * DAO for Responders (physical tag) management.

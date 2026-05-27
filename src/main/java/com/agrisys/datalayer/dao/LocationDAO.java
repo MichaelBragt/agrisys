@@ -7,7 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// Primær forfatter: Michael Bragt
+/**
+ * Data Access Object (DAO) for Location-tabellen.
+ * Håndterer persistens, oprettelse og hentning af staldens fysiske stier, bokse og lokationer.
+ * * @author Michael Bragt
+ * @see "PS-03: Interoperabilitet - Strukturering af staldens fysiske lokationsdata"
+ * @see "FR-19: CRUD Båse - Landmanden skal kunne oprette og administrere båse/bokse"
+ * @see "NFR-04: Reliability - Sikring af dataintegritet ved flytning og placering af grise"
+ */
 
 /**
  * DAO for the Location table.

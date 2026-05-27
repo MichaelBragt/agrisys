@@ -3,45 +3,71 @@ package com.agrisys.controller;
 import com.agrisys.Utils.*;
 import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.dto.chart.ChartSeriesData;
+import com.agrisys.datalayer.entity.LocationRecord;
 import com.agrisys.model.view.PigDetailDTO;
 import com.agrisys.model.view.PigSummary;
+import com.agrisys.service.LocationService;
 import com.agrisys.service.PigDetailsService;
 import com.agrisys.model.UserSession;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
+import javafx.util.StringConverter;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Controller for the Pig Detail popup..
+ * Controller til popup-modalen for en enkelts gris detaljer.
+ * Håndterer individuel vækstovervågning, performance-grafer samt deaktivering af IoT-hardware.
+ * * @author Eirik Pran og Michael Bragt og Nicolai Dahl
+ * @see "PS-01: Datavisualisering - Intuitive dashboards frem for rå tabeller"
+ * @see "PS-02: Adgangsstyring - Arkitektonisk rollestyring og individuel CRUD"
+ * @see "FR-03: Landmanden skal kunne rette stamdata, gruppe, lokation og foderindstillinger"
+ * @see "FR-04: Landmanden skal kunne stoppe registreringen af en gris (v. sygdom/skade)"
+ * @see "FR-05: Systemet skal vise vægt- og spiseaktivitet for en specifik gris"
+ * @see "FR-09: Systemet skal automatisk beregne FCR og Gennemsnitlig Daglig Tilvækst (ADG)"
+ * @see "FR-11: Systemet skal generere PDF-præsentation rapport for en individuel gris"
+ * @see "FR-15: Rådgiver-interfacet skal være begrænset til Read-only på grisens stamdata"
  */
 public class PigDetailController {
-    // Declaring varous UI elements
+    // JavaFX UI-elementer til præsentation af stamdata
     @FXML private Label lblAnimalNumber, lblResponderId, lblLocation, lblWeight, lblChartHeader;
     @FXML private Button btnVegt, btnFoder, btnFcr;
+    // Input-komponenter til redigering (Underlagt FR-03 og FR-15)
     @FXML private DatePicker dpBirthDate;
     @FXML private ComboBox<String> cbStatus;
+    @FXML private ComboBox<LocationRecord> cbLocation;
+    // UI-containere til grafer og gauges (Understøtter FR-05 og FR-09)
     @FXML private StackPane gaugeContainer, chartContainer;
     @FXML private Button btnEdit, btnSave, btnRemoveResponder;
     @FXML private Label lblWeightGained;
     @FXML private Label lblTotalFeed;
 
-
     // declaring services, DTO's and vars we need
     private final PigDetailsService service = new PigDetailsService();
+    private final LocationService locationService = new LocationService();
     private PigDetailDTO currentPig;
     private boolean isEditMode = false;
 
-    // Styring af den aktive graftype
+    // Styring af den aktive graftype på profil-dashboardet (FR-05 / FR-10)
     private enum ChartType { VEGT, FODER, FCR }
     private ChartType activeChartType = ChartType.VEGT; // Standardgraf ved åbning
 
+
+    /**
+     * initialize kaldes automatisk, når detalje-modalen indlæses i RAM.
+     */
     @FXML
     public void initialize() {
         cbStatus.getItems().addAll("Aktiv", "Slagtet", "Syg");
+        setupLocationComboBox();
+
+        // =========================================================================
+        // ROLE-BASED ACCESS CONTROL (RBAC) - AUTORISATION (PS-02 / FR-15)
+        // =========================================================================
         if (UserSession.getInstance().isRaadgiver()) {
             btnEdit.setVisible(false);
             btnEdit.setManaged(false);
@@ -50,21 +76,47 @@ public class PigDetailController {
         }
     }
 
+    private void setupLocationComboBox() {
+        cbLocation.setItems(FXCollections.observableArrayList(locationService.getAllLocations()));
+        cbLocation.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(LocationRecord loc) {
+                return loc == null ? "" : loc.locationId() + " - " + loc.locationName();
+            }
+
+            @Override
+            public LocationRecord fromString(String string) {
+                return null;
+            }
+        });
+    }
+
     public void initData(PigSummary summary) {
         refreshData(summary.animalNumber());
     }
 
+    /**
+     * Henter de nyeste, konsoliderede data fra databasen live jf. NFR-02.
+     */
     private void refreshData(String animalNumber) {
         try {
             Optional<PigDetailDTO> details = service.getDetailedInfo(animalNumber);
             details.ifPresent(dto -> {
                 this.currentPig = dto;
+                // Opdater basale stamdata-tekster
                 lblAnimalNumber.setText(dto.animalNumber());
                 lblResponderId.setText(dto.responderId() != null ? dto.responderId() : "Ingen");
                 lblLocation.setText(dto.locationName() != null ? dto.locationName() : "N/A");
+                
+                // Select current location in ComboBox
+                cbLocation.getItems().stream()
+                    .filter(loc -> loc.locationName().equals(dto.locationName()))
+                    .findFirst()
+                    .ifPresent(loc -> cbLocation.setValue(loc));
+
                 dpBirthDate.setValue(dto.birthDate());
                 cbStatus.setValue(dto.status());
-
+                // Hvis grisen ikke har et øremærke på, deaktiveres "Fjern hardware"-knappen
                 btnRemoveResponder.setDisable(dto.responderId() == null);
 
                 // Handle potential 0 or null weights
@@ -96,6 +148,10 @@ public class PigDetailController {
         }
     }
 
+
+    /**
+     * Forbereder og indsprøjter de grafiske elementer på grisen profil (FR-05 og FR-10).
+     */
     private void setupVisuals(PigDetailDTO dto) {
         // 1. Setup Gauge
         gaugeContainer.getChildren().clear();
@@ -116,9 +172,7 @@ public class PigDetailController {
             }
         }
     }
-    /**
-     * NY METODE: Henter den korrekte data og tegner grafen baseret på knappernes tilstand
-     */
+    // 2. Tegn standardgrafen (Vægtudvikling over tid jf. FR-05)
     private void opdaterIndividuelGraf(PigDetailDTO dto) {
         if (dto == null || dto.assignmentId() == null) return;
 
@@ -133,7 +187,7 @@ public class PigDetailController {
             ChartSeriesData series;
             javafx.scene.chart.LineChart<String, Number> chart;
 
-            // Switch-case der håndterer datakilden og opdaterer FXML-overskriften dynamic
+            // Switch-case der trækker den korrekte historik via vores Service (NFR-02)
             switch (activeChartType) {
                 case FODER -> {
                     lblChartHeader.setText("Foderindtag pr. besøg");
@@ -159,7 +213,7 @@ public class PigDetailController {
         }
     }
 
-    // TILFØJET: De tre onAction-metoder som kaldes fra jeres FXML-knapper
+    // Event-handlinger til skift af graftype (FR-05 / PS-01)
     @FXML
     private void handleVegtChartAction() {
         activeChartType = ChartType.VEGT;
@@ -178,21 +232,37 @@ public class PigDetailController {
         opdaterIndividuelGraf(currentPig);
     }
 
+    /**
+     * Skifter mellem visning og redigeringstilstand i interfacet (FR-03).
+     */
     @FXML
     private void handleToggleEdit() {
         isEditMode = !isEditMode;
+
+        // Toggle view elements
+        lblLocation.setVisible(!isEditMode);
+        lblLocation.setManaged(!isEditMode);
+        cbLocation.setVisible(isEditMode);
+        cbLocation.setManaged(isEditMode);
+
         dpBirthDate.setDisable(!isEditMode);
         cbStatus.setDisable(!isEditMode);
         btnSave.setVisible(isEditMode);
         btnEdit.setText(isEditMode ? "Annuller" : "Rediger");
     }
 
+
+    /**
+     * Persisterer ændringer i stamdata direkte ned i MSSQL Serveren (Opfylder FR-03 og FR-04).
+     */
     @FXML
     private void handleSave() {
         String selectedStatus = cbStatus.getValue();
         LocalDate selectedBirthDate = dpBirthDate.getValue();
+        LocationRecord selectedLocation = cbLocation.getValue();
         boolean shouldRemove = false;
 
+        // FORRETNINGSREGEL (FR-04): Hvis en gris stoppes (f.eks. pga. sygdom/slagtes), spørges der om hardwaren skal frigives
         if (!selectedStatus.equals("Aktiv") && currentPig.responderId() != null) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, 
                 "Ønsker du at fjerne responder " + currentPig.responderId() + " fra denne gris?", 
@@ -202,8 +272,9 @@ public class PigDetailController {
             shouldRemove = (result.isPresent() && result.get() == ButtonType.YES);
         }
 
-        try {
-            service.updatePigDetails(currentPig.animalNumber(), selectedStatus, selectedBirthDate, shouldRemove, currentPig.responderId());
+        try { // Skub ændringer til databaselaget jf. lagdelt arkitektur (NFR-02)
+            Integer newLocId = selectedLocation != null ? selectedLocation.locationId() : null;
+            service.updatePigDetails(currentPig.animalNumber(), selectedStatus, selectedBirthDate, shouldRemove, currentPig.responderId(), newLocId);
             handleToggleEdit();
             refreshData(currentPig.animalNumber());
         } catch (SQLException e) {
@@ -211,6 +282,9 @@ public class PigDetailController {
         }
     }
 
+    /**
+     * Manuel deallokering af RFID hardware-øremærke fra grisen (Understøtter hardware-frigivelse jf. FR-04).
+     */
     @FXML
     private void handleRemoveResponder() {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION, 
@@ -218,7 +292,7 @@ public class PigDetailController {
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.YES) {
                 try {
-                    service.updatePigDetails(currentPig.animalNumber(), currentPig.status(), currentPig.birthDate(), true, currentPig.responderId());
+                    service.updatePigDetails(currentPig.animalNumber(), currentPig.status(), currentPig.birthDate(), true, currentPig.responderId(), null);
                     refreshData(currentPig.animalNumber());
                 } catch (SQLException e) {
                     UIErrorReport.showDatabaseError(e);

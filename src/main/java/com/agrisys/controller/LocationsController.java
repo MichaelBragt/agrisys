@@ -14,6 +14,15 @@ import javafx.stage.Stage;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Controller til administration og CRUD-håndtering af staldens bokse og stier.
+ * Gør det muligt for landmanden at vedligeholde de fysiske rammer i svineproduktionen live.
+ * * @author Nicolai Dahl
+ * @see "PS-03: Interoperabilitet - Strukturering og persistent besætningsstyring"
+ * @see "FR-19: CRUD Båse - Landmanden skal kunne oprette og administrere båse/bokse"
+ * @see "NFR-02: Architecture - Systemet skal opbygges i en lagdelt arkitektur (UI, Logik, Data)"
+ */
+
 public class LocationsController {
 
     @FXML private TableView<LocationRecord> locationTable;

@@ -6,12 +6,16 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-// Primær forfatter: Michael Bragt
-
 /**
- * DAO for the Pig_Location table.
- * Manages the historical and current placement of pigs in locations.
+ * Data Access Object (DAO) for Pig_Location-tabellen.
+ * Varetager administrationen af grisenes historiske og aktuelle placeringer i staldens bokse/stier.
+ * * @author Michael Bragt og Nicolai Dahl
+ * @see "PS-03: Interoperabilitet - Strukturering af staldens historiske lokationsdata"
+ * @see "FR-03: Landmanden skal kunne rette stamdata, gruppe, lokation og foderindstillinger"
+ * @see "FR-19: CRUD Båse - Landmanden skal kunne oprette og administrere båse/bokse"
+ * @see "NFR-04: Reliability - Sikring af dataintegritet ved flytning og placering af grise"
  */
+
 public class PigLocationDAO {
 
     /**
@@ -96,6 +100,24 @@ public class PigLocationDAO {
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next(); // True if at least one active pig exists
             }
+        }
+    }
+
+    /**
+     * Closes the current active placement for a pig by setting the departed_at timestamp.
+     * This is a critical part of the "Historical Brain" logic to ensure traceability.
+     *
+     * @param conn The active transactional connection.
+     * @param animalNumber The unique ID of the pig.
+     * @throws SQLException If the update fails.
+     */
+    public void closeCurrentLocation(Connection conn, String animalNumber) throws SQLException {
+        String sql = "UPDATE Pig_Location SET departed_at = GETUTCDATE() " +
+                     "WHERE animal_number = ? AND departed_at IS NULL";
+        
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, animalNumber);
+            pstmt.executeUpdate();
         }
     }
 

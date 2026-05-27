@@ -2,9 +2,11 @@ package com.agrisys.service;
 
 import com.agrisys.DbConnect;
 import com.agrisys.datalayer.dao.PigDAO;
+import com.agrisys.datalayer.dao.PigLocationDAO;
 import com.agrisys.datalayer.dao.PptDataDAO;
 import com.agrisys.datalayer.dao.ResponderAssignmentDAO;
 import com.agrisys.datalayer.dao.RespondersDAO;
+import com.agrisys.datalayer.entity.PigLocationRecord;
 import com.agrisys.dto.chart.ChartSeriesData;
 import com.agrisys.model.view.PigDetailDTO;
 
@@ -14,12 +16,19 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+
 /**
  * Service for handling detailed pig operations.
  * Implements logic for status changes and responder de-assignment.
+ * @author Michael Bragt
+ * @see "PS-01, PS-02"
+ * @see "FR-03: Landmanden skal kunne rette stamdata, gruppe, lokation og foder indstillinger."
+ * @see "FR-04: Landmanden skal kunne stoppe registreringen af en gris. (v. sygdom/skade)"
+ * @see "FR-05: Systemet skal vise vægt- og spise aktivitet for en specifik gris."
  */
 public class PigDetailsService {
     private final PigDAO pigDAO = new PigDAO();
+    private final PigLocationDAO pigLocationDAO = new PigLocationDAO();
     private final RespondersDAO respondersDAO = new RespondersDAO();
     private final ResponderAssignmentDAO assignmentDAO = new ResponderAssignmentDAO();
     private final PptDataDAO pptDataDAO = new PptDataDAO();
@@ -30,6 +39,7 @@ public class PigDetailsService {
      * @return An Optional containing the detailed DTO if found.
      * @throws SQLException if a database error occurs.
      */
+    // Sporbarhed: PS-01 | FR-05
     public Optional<PigDetailDTO> getDetailedInfo(String animalNumber) throws SQLException {
         return pigDAO.getPigDetail(animalNumber);
     }
@@ -41,6 +51,7 @@ public class PigDetailsService {
      * @return ChartSeriesData formatted for the AgrisysChartBuilder.
      * @throws SQLException if a database error occurs.
      */
+    // Sporbarhed: PS-01 | FR-05
     public ChartSeriesData getPigWeightHistory(String animalNumber, int assignmentId) throws SQLException {
         var points = pptDataDAO.getWeightHistory(assignmentId);
         return new ChartSeriesData("Vægt for " + animalNumber, points);
@@ -53,14 +64,18 @@ public class PigDetailsService {
      * @param birthDate The biological birth date to persist.
      * @param releaseResponder Whether to decouple the responder from the pig.
      * @param responderId The ID of the responder to be released.
+     * @param newLocationId The ID of the new location to move the pig to.
      * @throws SQLException if the transaction fails.
      */
-    public void updatePigDetails(String animalNumber, String newStatus, LocalDate birthDate, boolean releaseResponder, String responderId) throws SQLException {
+    // Sporbarhed: PS-02 | FR-03
+    public void updatePigDetails(String animalNumber, String newStatus, LocalDate birthDate, boolean releaseResponder, String responderId, Integer newLocationId) throws SQLException {
+        // We get the shared connection but WE DO NOT CLOSE IT because it's a Singleton.
         Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
         try {
+            // We manage the TRANSACTION state
             conn.setAutoCommit(false);
 
-            // 1. Update Pig Status
+            // 1. Update basic Pig data
             String updatePigSql = "UPDATE Pig SET status = ?, birth_date = ? WHERE animal_number = ?";
             try (var pstmt = conn.prepareStatement(updatePigSql)) {
                 pstmt.setString(1, newStatus);
@@ -69,7 +84,17 @@ public class PigDetailsService {
                 pstmt.executeUpdate();
             }
 
-            // 2. Handle Responder Release
+            // 2. Handle Location Change
+            if (newLocationId != null) {
+                var currentLoc = pigLocationDAO.findCurrentLocationByAnimalNumber(conn, animalNumber);
+                // Only move if the pig is actually changing boxes or has no record
+                if (currentLoc.isEmpty() || !currentLoc.get().locationId().equals(newLocationId)) {
+                    pigLocationDAO.closeCurrentLocation(conn, animalNumber);
+                    pigLocationDAO.create(conn, new PigLocationRecord(null, animalNumber, newLocationId, LocalDateTime.now(), null));
+                }
+            }
+
+            // 3. Handle Responder logic
             if (releaseResponder && responderId != null) {
                 removeResponderFromPig(conn, animalNumber, responderId);
             }
@@ -83,11 +108,13 @@ public class PigDetailsService {
         }
     }
 
+    // Sporbarhed: PS-01 | FR-05
     public ChartSeriesData getPigFeedHistory(String animalNumber, int assignmentId) throws SQLException {
         var points = pptDataDAO.getFeedHistory(assignmentId);
         return new ChartSeriesData("Foderindtag for " + animalNumber, points);
     }
 
+    // Sporbarhed: PS-01 | FR-05
     public ChartSeriesData getPigFcrHistory(String animalNumber, int assignmentId) throws SQLException {
         var points = pptDataDAO.getIndividualFcrHistory(assignmentId);
         return new ChartSeriesData("FCR udvikling for " + animalNumber, points);
@@ -100,6 +127,7 @@ public class PigDetailsService {
      * @param responderId The responder ID.
      * @throws SQLException if the database update fails.
      */
+    // Sporbarhed: PS-02 | FR-03
     public void removeResponderFromPig(Connection conn, String animalNumber, String responderId) throws SQLException {
         // Find active assignment
         var assignmentOpt = assignmentDAO.findActiveAssignmentByResponderId(conn, responderId);
