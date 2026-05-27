@@ -11,8 +11,15 @@ import java.util.logging.Logger;
 
 
 /**
- * @author Michael Bragt
+ * Singleton database-connector implementeret som en trådsikker Enum.
+ * Varetager livscyklushåndtering, konfigurationsindlæsning og automatisk genopretning (Self-Healing) af MSSQL-forbindelsen.
+ * * @author Michael Bragt (med kommentarer af gruppen)
+ * @see "PS-03: Interoperabilitet - Etablering og persistens af staldens datagrundlag"
+ * @see "FR-01: Systemet skal importere data fra Excel-filer til MSSQL-databasen"
+ * @see "NFR-02: Architecture - Enkelt, centraliseret adgangspunkt til datalaget i en 3-lags struktur"
+ * @see "NFR-04: Reliability - Sikring af en stabil, persistent databaseforbindelse under løbende drift"
  */
+
 public enum DbConnect {
     /**
      * Our ENUM can only have this ONE constant

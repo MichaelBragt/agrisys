@@ -1,5 +1,14 @@
 package com.agrisys.datalayer.dao;
 
+/**
+ * Data Access Object (DAO) for AppUser-tabellen.
+ * Varetager database-integrationen for brugerautentificering og rettighedsstyring.
+ * * @author Michael Bragt
+ * @see "PS-02: Adgangsstyring - Arkitektonisk rollestyring og adgangsniveauer"
+ * @see "FR-08: Brugere (landmand/rådgiver) skal kunne logge ind med unikt login"
+ * @see "FR-17: CRUD-håndtering af brugere (Admin) direkte i databasen/systemet"
+ */
+
 import com.agrisys.DbConnect;
 import com.agrisys.Utils.SecurityUtils;
 import com.agrisys.datalayer.entity.AppUserRecord;

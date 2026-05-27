@@ -22,7 +22,7 @@ import java.util.Optional;
 /**
  * Controller til popup-modalen for en enkelts gris detaljer.
  * Håndterer individuel vækstovervågning, performance-grafer samt deaktivering af IoT-hardware.
- * * @author Eirik (og gruppen)
+ * * @author Eirik Pran og Michael Bragt og Nicolai Dahl
  * @see "PS-01: Datavisualisering - Intuitive dashboards frem for rå tabeller"
  * @see "PS-02: Adgangsstyring - Arkitektonisk rollestyring og individuel CRUD"
  * @see "FR-03: Landmanden skal kunne rette stamdata, gruppe, lokation og foderindstillinger"

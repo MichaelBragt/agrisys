@@ -3,13 +3,11 @@ package com.agrisys.datalayer.entity;
 import java.time.LocalDateTime;
 
 /**
- * Manages the "Historical Brain" relationship between a Pig and a Responder.
- * 
- * @param assignmentId Primary key for the assignment period.
- * @param animalNumber Foreign key to Pig.
- * @param responderId Foreign key to Responders.
- * @param dateAssigned When the tag was attached.
- * @param dateRemoved When the tag was removed (null if active).
+ * Systemkritisk koblings-entity der sporer livscyklussen for et genanvendeligt RFID-øremærke på et dyr.
+ * Sørger for, at historiske IoT-sensormålinger altid kan spores tilbage til det korrekte dyr, selvom mærket genbruges.
+ * * @author Michael Bragt
+ * @see "PS-03: Interoperabilitet - Håndtering af hardware-allokering uden datatab"
+ * @see "Domain Rule 1.2: Historikstyring for hardware-komponenter via tildelings- og afmonteringstidsstempler"
  */
 public record ResponderAssignmentRecord(
     Integer assignmentId,

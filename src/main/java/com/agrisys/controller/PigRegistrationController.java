@@ -17,7 +17,7 @@ import javafx.util.StringConverter;
 /**
  * Controller til styring af oprettelsesguiden (guiden til registrering af nye grise).
  * Håndterer datavalidering og den indledende kobling af IoT-hardware til en biologisk record.
- * * @author ---------
+ * * @author Michael Bragt
  * @see "PS-01: Datavisualisering - Intuitive dashboards frem for uoverskuelige tabeller"
  * @see "PS-02: Adgangsstyring - Arkitektonisk rollestyring og individuel CRUD"
  * @see "PS-03: Interoperabilitet - Datamigrering og integration"
