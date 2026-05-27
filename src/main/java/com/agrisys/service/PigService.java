@@ -6,10 +6,14 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Service layer for Pig management.
- * Handles business rules and aggregates data from DAOs.
- * We have this service method because we need to calculate FRC
- * for the data after we have recieved it from the database.
+ * Servicelag til generel grise- og besætningsstyring.
+ * Varetager forretningsregler og koordinerer dataflowet mellem præsentationslaget og databasselaget.
+ * * @author Michael Bragt
+ * @see "PS-01: Datavisualisering - Aggregering af rådata til overskuelige dashboards"
+ * @see "PS-02: Adgangsstyring - Mellemled for sikker datahentning"
+ * @see "FR-06: Systemet skal kunne filtrere besætningen i en liste for fokuseret overblik"
+ * @see "FR-09: Systemet skal automatisk beregne FCR og Gennemsnitlig Daglig Tilvækst (ADG)"
+ * @see "NFR-02: Architecture - Systemet skal opbygges i en lagdelt arkitektur (UI, Logik, Data)"
  */
 public class PigService {
     private final PigDAO pigDAO;

@@ -6,12 +6,16 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-// Primær forfatter: Michael Bragt
-
 /**
- * DAO for the Responder_Assignment table.
- * Manages the "Historical Brain" relationship between a Pig and a Responder.
+ * Data Access Object (DAO) for Responder_Assignment-tabellen.
+ * Varetager administrationen af den historiske og aktuelle kobling mellem en biologisk gris og et fysisk RFID-øremærke.
+ * * @author Michael Bragt
+ * @see "PS-03: Interoperabilitet - Datamigrering og håndtering af hardware-livscyklus"
+ * @see "FR-02: Landmanden skal kunne oprette/indsætte en ny gris med tildelt hardware"
+ * @see "FR-04: Landmanden skal kunne stoppe registreringen af en gris og frigøre hardwaren"
+ * @see "Domain Rule 1.2: Historikstyring for genanvendelige RFID-øremærker via tidsstempler"
  */
+
 public class ResponderAssignmentDAO {
 
     /**

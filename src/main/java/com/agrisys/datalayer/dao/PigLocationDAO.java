@@ -6,12 +6,16 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-// Primær forfatter: Michael Bragt
-
 /**
- * DAO for the Pig_Location table.
- * Manages the historical and current placement of pigs in locations.
+ * Data Access Object (DAO) for Pig_Location-tabellen.
+ * Varetager administrationen af grisenes historiske og aktuelle placeringer i staldens bokse/stier.
+ * * @author Michael Bragt og Nicolai Dahl
+ * @see "PS-03: Interoperabilitet - Strukturering af staldens historiske lokationsdata"
+ * @see "FR-03: Landmanden skal kunne rette stamdata, gruppe, lokation og foderindstillinger"
+ * @see "FR-19: CRUD Båse - Landmanden skal kunne oprette og administrere båse/bokse"
+ * @see "NFR-04: Reliability - Sikring af dataintegritet ved flytning og placering af grise"
  */
+
 public class PigLocationDAO {
 
     /**

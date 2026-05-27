@@ -3,9 +3,15 @@ package com.agrisys.datalayer.entity;
 import java.time.LocalDateTime;
 
 /**
- * Manages the historical placement of a pig in a specific location.
- * This tracks where a pig was at a given time.
- *
+ * Historisk tidsstempels-entity der sporer en specifik gris' ophold i en boks over tid.
+ * Fungerer som det datamæssige fundament for staldens "historiske hjerne".
+ * * @author Michael Bragt
+ * @see "PS-03: Interoperabilitet - Sikring af stabil og persistent historikstyring under flytninger"
+ * @see "FR-03: Landmanden skal kunne rette lokation og spore historiske skift"
+ */
+
+/**
+
  * @param pigLocationId Primary key for this specific placement period.
  * @param animalNumber Foreign key to Pig.
  * @param locationId Foreign key to Location.

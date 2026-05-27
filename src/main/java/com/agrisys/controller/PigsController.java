@@ -36,11 +36,11 @@ import java.util.List;
 /**
  * Controller til styring af griseoversigten og det tilhørende vækstdashboard.
  * Kobler den visuelle præsentation sammen med de biologiske analysealgoritmer.
- * * @author Eirik (og gruppen)
+ * * @author Michael Bragt og Eirik Pran
  * @see "PS-01: Datavisualisering - Transformation af rådata til dashboards"
-        * @see "FR-10: Systemet skal præsentere vækst- og foderdata via et Vækst Dashboard med grafer"
-        * @see "FR-18: Navigation - Genvej via dobbeltklik til profil"
-        * @see "NFR-01: Usability - Landmanden skal kunne tilgå en vækstkurve med maks. 3 klik"
+ * @see "FR-10: Systemet skal præsentere vækst- og foderdata via et Vækst Dashboard med grafer"
+ * @see "FR-18: Navigation - Genvej via dobbeltklik til profil"
+ * @see "NFR-01: Usability - Landmanden skal kunne tilgå en vækstkurve med maks. 3 klik"
  */
 
 public class PigsController {

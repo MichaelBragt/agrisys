@@ -1,9 +1,11 @@
 package com.agrisys.datalayer.entity;
 
 /**
- * Represents a physical location or pen where pigs can be placed.
- * @param locationId Unique database identifier.
- * @param locationName Human-readable name (e.g., 'Sti 102', 'Faresti 1').
+ * Enterprise Entity (Data Record) der repræsenterer en fysisk sti, boks eller lokation i stalden.
+ * Anvendes til at binde grisenes ophold og målinger op på specifikke geografiske stald-segmenter.
+ * * @author Michael Bragt
+ * @see "PS-03: Interoperabilitet - Strukturering af staldens fysiske lokationsdata"
+ * @see "FR-19: CRUD Båse - Landmanden skal kunne oprette og administrere båse/bokse"
  */
 public record LocationRecord(
     Integer locationId,

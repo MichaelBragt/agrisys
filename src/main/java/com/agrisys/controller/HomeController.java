@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * Controller for the Main Home Dashboard.
  * Displays aggregated herd metrics, live FCR trends, and dynamic biological alert cards.
- * * @author [Dit Navn / Gruppemedlem]
+ * * @author Michael Bragt og Eirik Pran
  * @see "Requirement 2.2: Landmanden og rådgiveren kan filtrere/få vist data og hændelser for hele besætningen"
  * @see "Problem 2.3: Innovativ og intuitiv præsentation af PPT-data frem for uoverskuelige tabeller"
  */

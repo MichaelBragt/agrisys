@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Eirik
+ * @author Eirik Pran
  * @see "PS-01"
  * @see "FR-05: Systemet skal vise vægt- og spise aktivitet for en specifik gris."
  * @see "FR-10: Systemet skal præsentere vækst- og foderdata via et “Vækst Dashboard” med grafer."
