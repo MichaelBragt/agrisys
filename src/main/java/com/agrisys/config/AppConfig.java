@@ -4,7 +4,7 @@ package com.agrisys.config;
  * Centralized Application Configuration.
  * Provides structural constants for the UI and operational keys for environment variables.
  *
- * Primær forfatter: Michael Bragt
+ * @author Michael Bragt
  **/
 
 public final class AppConfig {
