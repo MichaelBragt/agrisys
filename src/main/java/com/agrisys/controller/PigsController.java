@@ -1,7 +1,7 @@
 package com.agrisys.controller;
 
 import com.agrisys.Utils.AgrisysChartBuilder;
-import com.agrisys.Utils.Gauge; // Sørg for at importere jeres Gauge klasse
+import com.agrisys.Utils.Gauge;
 import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.dto.chart.ChartSeriesData;
 import com.agrisys.datalayer.entity.LocationRecord;
@@ -145,7 +145,7 @@ public class PigsController {
         colWeight.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().currentWeight()));
         colFCR.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().fcr()));
 
-        // Here we telle the table to subscribe to the pigSummaries list
+        // Here we tell the table to subscribe to the pigSummaries list
         // the setItems method for tableviews is what this is meant for
         pigTable.setItems(pigSummaries);
 
