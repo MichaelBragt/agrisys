@@ -16,13 +16,15 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-// Primær forfatter: Michael Bragt
-// Sporbarhed: PS-02, PS-01 | FR-03, FR-04, FR-05
-// For optimization this class should be broken into several classes
 
 /**
  * Service for handling detailed pig operations.
  * Implements logic for status changes and responder de-assignment.
+ * @author Michael Bragt
+ * @see "PS-01, PS-02"
+ * @see "FR-03: Landmanden skal kunne rette stamdata, gruppe, lokation og foder indstillinger."
+ * @see "FR-04: Landmanden skal kunne stoppe registreringen af en gris. (v. sygdom/skade)"
+ * @see "FR-05: Systemet skal vise vægt- og spise aktivitet for en specifik gris."
  */
 public class PigDetailsService {
     private final PigDAO pigDAO = new PigDAO();

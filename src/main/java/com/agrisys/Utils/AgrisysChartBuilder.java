@@ -14,6 +14,12 @@ import java.util.List;
 
 public final class AgrisysChartBuilder {
 
+    /**
+     * @author Eirik
+     * @see "PS-01"
+     * @see "FR-05: Systemet skal vise vægt- og spise aktivitet for en specifik gris."
+     * @see "FR-10: Systemet skal præsentere vækst- og foderdata via et “Vækst Dashboard” med grafer."
+     */
     private AgrisysChartBuilder() {}
 
     /**

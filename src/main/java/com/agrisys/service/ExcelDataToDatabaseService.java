@@ -21,6 +21,9 @@ import java.util.logging.Logger;
 /**
  * Orchestrator service for importing Excel data into the 3NF database schema.
  * Handles multi-table inserts and transactional integrity (PS-03).
+ * @author Michael Bragt
+ * @see "PS-01"
+ * @see "FR-01: "Systemet skal importere data fra Excel-filer til MSSQL-databasen."
  */
 public class ExcelDataToDatabaseService {
 

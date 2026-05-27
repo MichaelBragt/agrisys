@@ -20,6 +20,7 @@ import javafx.scene.text.TextAlignment;
  * show a Gauge meter
  * With the ability to set the radius and a number for how
  * much the gauge is filled
+ * @author Michael Bragt & Eirik
  */
 public class Gauge extends StackPane {
 

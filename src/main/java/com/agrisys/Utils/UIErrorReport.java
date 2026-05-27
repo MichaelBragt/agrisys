@@ -4,10 +4,15 @@ import javafx.scene.control.Alert;
 
 import java.sql.SQLException;
 
-// Primær forfatter: Michael Bragt
-
+/**
+ * @author Michael Bragt
+ */
 public class UIErrorReport {
 
+    /**
+     *
+     * @param t
+     */
     public static void showDatabaseError(Throwable t) {
 
         Throwable cause = t;

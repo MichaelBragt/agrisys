@@ -107,6 +107,7 @@ public class PigDAO {
      * Henter akkumulerede og beregnede data for hele besætningen (Home- & Handlinger-tabeller).
      * Anvender T-SQL OUTER APPLY til lynhurtigt at fange de absolut nyeste og tidligste vægt-logs,
      * hvilket muliggør en præcis, biologisk FCR-beregning direkte i databaselaget (Opfylder FR-09).
+     * @see "FR-09: "Systemet skal automatisk beregne FCR og Gennemsnitlig Daglig Tilvækst (ADG)"
      */
     public List<PigSummary> getPigSummaries() throws SQLException {
         List<PigSummary> summaries = new ArrayList<>();
