@@ -13,14 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-// Primær forfatter: Michael Bragt
-// Sporbarhed: PS-03 | FR-01
-
 /**
- * Service responsible for parsing Excel (.xlsx) files using Apache POI.
+ * Service responsible for parsing Excel (.xlsx) files using Apache POI library.
  * Implements robust error handling for missing cells or malformed data.
  * We use the POI library workbook interface that represents the data from the Excel file
  * as a full parsing from the file, the sheet interface is used for each sheet in an Excel-file
+ * @author Michael Bragt
+ * @see "PS-03"
+ * @see "FR-01: Systemet skal importere data fra Excel-filer til MSSQL-databasen."
  */
 public class ExcelParserService {
 

@@ -19,6 +19,9 @@ import java.util.logging.Logger;
  * This service provides a list of available locations for filtering purposes in the UI
  * and handles CRUD operations with business logic validation.
  * Adheres to the Business Logic Layer (PS-02) by abstracting database access for locations.
+ * @author Michael Bragt
+ * @see "PS-01, PS-03"
+ * @see "FR-19: CRUD Båse: Landmanden skal kunne oprette og administrere båse/bokse."
  */
 public class LocationService {
 

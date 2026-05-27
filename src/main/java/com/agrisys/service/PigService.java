@@ -36,11 +36,4 @@ public class PigService {
             return List.of();
         }
     }
-
-    /**
-     * This method is now redundant as getPigDashboardData handles both cases.
-     * @deprecated Use {@link #getPigDashboardData(Integer)} instead.
-     */
-    @Deprecated
-    public List<PigSummary> getPigsByLocation(int locationId) { return getPigDashboardData(locationId); }
 }

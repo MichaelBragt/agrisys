@@ -9,7 +9,10 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-// Primær forfatter: Michael Bragt
+
+/**
+ * @author Michael Bragt
+ */
 public enum DbConnect {
     /**
      * Our ENUM can only have this ONE constant
