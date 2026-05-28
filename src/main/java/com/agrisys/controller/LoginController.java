@@ -104,7 +104,7 @@ public class LoginController {
         try {
             // OPTIMERING: Hent det aktuelle vindue via scenegraf-roden og indlæs view stringent via getClass()
             Stage stage = (Stage) usernameField.getScene().getWindow();
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(AppConfig.MAIN_VIEW));
+            FXMLLoader fxmlLoader = new FXMLLoader(AgrisysApplication.class.getResource(AppConfig.MAIN_VIEW));
 
             // Indlæs scenen baseret på jeres NFR-arkitekturkrav til skærmstørrelse
             Scene scene = new Scene(fxmlLoader.load(), AppConfig.MIN_WIDTH, AppConfig.MIN_HEIGHT);
