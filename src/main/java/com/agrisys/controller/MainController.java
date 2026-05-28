@@ -1,7 +1,6 @@
 package com.agrisys.controller;
 
 import com.agrisys.AgrisysApplication;
-import com.agrisys.DbConnect;
 import com.agrisys.config.AppConfig;
 import com.agrisys.model.UserSession;
 import javafx.event.ActionEvent;
@@ -26,7 +25,7 @@ import java.util.logging.Logger;
 /**
  * Orchestrator og controller for applikationens hovedskal (Application Shell).
  * Håndterer overordnet top-level navigation, globale dialogbokse og sikker nedlukning af brugersessioner.
- * * @author Eirik Pran og Maria Alazzawi og Michael Bragt
+ * * @author Eirik Pran og Maria Alazzawi og Michael Bragt (med optimeringer af gruppen)
  * @see "PS-02: Adgangsstyring - Session Management og rettigheds-destruktion"
  * @see "FR-18: Navigation - Implementering af intuitiv home-, dialog- og tilbage-navigation"
  * @see "NFR-02: Architecture - Fungerer som præsentationslagets overordnede ramme (UI Shell)"
@@ -37,6 +36,7 @@ public class MainController {
     /**
      * initialize kaldes automatisk af JavaFX, når hovedskallen (f.eks. med TabPane) indlæses i RAM.
      */
+    @FXML
     public void initialize() {
         // Initialization logic for the TabPane shell
     }
@@ -48,11 +48,12 @@ public class MainController {
     @FXML
     private void handleProfile() {
         try {
-            Dialog<ButtonType> profileDialog = loadDialog("profile-dialog.fxml");
-            DialogPane dialogPane = profileDialog.getDialogPane();
+            // OPTIMERING: Gort final for stringent hukommelseshåndtering
+            final Dialog<ButtonType> profileDialog = loadDialog("profile-dialog.fxml");
+            final DialogPane dialogPane = profileDialog.getDialogPane();
 
-            Label lblUsername = (Label) dialogPane.lookup("#lblProfileUsername");
-            Label lblRole = (Label) dialogPane.lookup("#lblProfileRole");
+            final Label lblUsername = (Label) dialogPane.lookup("#lblProfileUsername");
+            final Label lblRole = (Label) dialogPane.lookup("#lblProfileRole");
 
             var currentUser = UserSession.getInstance().getCurrentUser();
             if (currentUser != null) {
@@ -79,14 +80,19 @@ public class MainController {
     @FXML
     private void handleLogout(ActionEvent event) {
         try {
-            Dialog<ButtonType> confirmLogout = loadDialog("logout-dialog.fxml");
-            Optional<ButtonType> result = confirmLogout.showAndWait();
+            final Dialog<ButtonType> confirmLogout = loadDialog("logout-dialog.fxml");
+            final Optional<ButtonType> result = confirmLogout.showAndWait();
+
             if (result.isPresent() && result.get().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
+                // Destruer sessions-data (Session Invalidation jf. PS-02)
                 UserSession.getInstance().logout();
-                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-                FXMLLoader fxmlLoader = new FXMLLoader(AgrisysApplication.class.getResource(AppConfig.LOGIN_VIEW));
-                Scene scene = new Scene(fxmlLoader.load(), AppConfig.MIN_WIDTH, AppConfig.MIN_HEIGHT);
+
+                // Naviger sikkert tilbage til login-skærmen baseret på jeres AppConfig metadata
+                final Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                final FXMLLoader fxmlLoader = new FXMLLoader(AgrisysApplication.class.getResource(AppConfig.LOGIN_VIEW));
+                final Scene scene = new Scene(fxmlLoader.load(), AppConfig.MIN_WIDTH, AppConfig.MIN_HEIGHT);
                 stage.setScene(scene);
+                stage.centerOnScreen(); // Sikrer at loginvinduet står pænt centreret på skærmen efter logud
             }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Kunne ikke indlæse log ud-dialog.", e);
@@ -97,7 +103,7 @@ public class MainController {
      * Privat hjælpemetode til generisk indlæsning af dialog-ressourcer jf. "Don't Repeat Yourself" (DRY).
      */
     private Dialog<ButtonType> loadDialog(String fileName) throws IOException {
-        URL dialogResource = Objects.requireNonNull(getClass().getResource("/com/agrisys/" + fileName));
+        final URL dialogResource = Objects.requireNonNull(getClass().getResource("/com/agrisys/" + fileName));
         return FXMLLoader.load(dialogResource);
     }
 }
