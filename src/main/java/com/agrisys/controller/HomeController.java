@@ -31,58 +31,76 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Controller for the Main Home Dashboard.
- * Displays aggregated herd metrics, live FCR trends, and dynamic biological alert cards.
- * * @author Michael Bragt og Eirik Pran
- * @see "Requirement 2.2: Landmanden og rådgiveren kan filtrere/få vist data og hændelser for hele besætningen"
- * @see "Problem 2.3: Innovativ og intuitiv præsentation af PPT-data frem for uoverskuelige tabeller"
+ * Controller for hovedskærmen (Stald Performance Dashboard).
+ * Aggregerer komplekse stalddata til realtids KPI-metrikker, en biologisk FCR-måler (Gauge)
+ * og genererer reaktive, tabelløse "Action Cards" ved kritiske hændelser i besætningen.
+ * * @author Michael Bragt og Eirik Pran (med kommentarer af gruppen)
+ * @see "PS-01: Datavisualisering - Reduktion af kognitiv belastning via intuitive dashboards"
+ * @see "PS-02: Adgangsstyring - Rollebaseret synlighed af administrative værktøjer"
+ * @see "FR-01: Systemet skal importere data fra Excel-filer til MSSQL-databasen"
+ * @see "FR-09: Systemet skal automatisk beregne FCR og Gennemsnitlig Daglig Tilvækst (ADG)"
+ * @see "FR-10: Systemet skal præsentere vækst- og foderdata via et Vækst Dashboard med grafer"
+ * @see "FR-12: Systemet skal markere afvigere (afvigende spise/vægt) med visuelle indikatorer"
+ * @see "FR-16: Systemet skal logge kritiske hændelser (f.eks. hvornår en gris stoppes/bliver syg)"
+ * @see "FR-18: Navigation - Direkte genvej/klik-styring fra Action Card til specifik griseprofil"
+ * @see "NFR-01: Usability - Landmanden skal kunne tilgå en dybdegående vækstkurve med maks. 3 klik"
+ * @see "NFR-02: Architecture - Opbygget i en lagdelt struktur (UI-lag adskilt fra logik og data)"
  */
 public class HomeController {
 
-    // KPI-kort til overordnede nøgletal
+    // KPI-kort til præsentation af overordnede besætningsmønstre (FR-10)
     @FXML private Label lblTotalPigs;
     @FXML private Label lblAverageFcr;
     @FXML private Label lblTotalMeasurements;
 
-    // Separate containere fra det nye layout
-    @FXML private StackPane gaugeContainer;       // Dedikeret udelukkende til den store FCR Gauge
-    @FXML private StackPane weightChartContainer; // Dedikeret til den store vægtudviklingstrend
-    @FXML private Button importButton;
+    // UI-containere til grafiske komponenter (PS-01)
+    @FXML private StackPane gaugeContainer;       // Dedikeret beholder til den cirkulære FCR Gauge
+    @FXML private StackPane weightChartContainer; // Dedikeret beholder til besætningens FCR-trend-graf
+    @FXML private Button importButton;            // Importknap underlagt adgangskontrol (FR-15)
 
-    // Dynamisk container til biologiske advarselskort (Action Cards)
+    // Dynamisk, responsiv container til biologiske advarselskort (Action Cards jf. FR-12)
     @FXML private javafx.scene.layout.FlowPane alertContainer;
 
-    // Services
+    // Applikationsservices (Lagdelt arkitektur jf. NFR-02)
     private final ExcelParserService parserService = new ExcelParserService();
     private final ExcelDataToDatabaseService excelDataToDatabaseService = new ExcelDataToDatabaseService();
     private final ChartService chartService = new ChartService();
     private final PigService pigService = new PigService();
 
+
+    /**
+     * initialize kaldes automatisk af JavaFX, når dashboardet indlæses i RAM.
+     * Håndterer rollebaseret adgangsstyring og igangsætter data-hydreringen.
+     */
     @FXML
     public void initialize() {
-        // 1. Adgangsstyring for Rådgiver
+        // =========================================================================
+        // ROLE-BASED ACCESS CONTROL (RBAC) - AUTORISATION (PS-02 / FR-15)
+        // =========================================================================
         if (UserSession.getInstance().isRaadgiver()) {
+            // Hvis den loggede bruger er Rådgiver, skjules den kritiske Excel-importfunktion
             importButton.setVisible(false);
             importButton.setManaged(false);
         }
 
-        // 2. Hent og opdater alle data på dashboardet (KPI, Gauge, Graf og Action Cards)
+        // Klargør og indlæs alt dashboard-data live fra MSSQL Serveren
         refreshDashboardData();
     }
 
     /**
-     * Hovedmetode der genindlæser og opdaterer hele dashboardets tilstand live.
+     * Genindlæser og genberegner hele dashboardets tilstand asynkront.
+     * Sørger for live opdatering af KPI-kort, Gauge, LineChart og Action Cards.
      */
     private void refreshDashboardData() {
         try {
-            // Hent besætningsdata (null henter for alle lokationer)
+            // Hent den samlede besætning via logiklaget (null indikerer 'alle lokationer' jf. FR-06)
             List<PigSummary> allPigs = pigService.getPigDashboardData(null);
 
-            // 1. Beregn og opdater KPI-tal
+            // 1. OPREMNING AF KPI-METRIKKER (Opfylder FR-09 og FR-10)
             int activePigsCount = allPigs.size();
             double herdAverageFcr = 0.0;
 
-            // Brug jeres eksisterende data-trend til at finde den nyeste gennemsnitlige FCR
+            // Udtræk besætningens nyeste, vægtede gennemsnitlige FCR fra tidsserien
             ChartSeriesData fcrTrend = chartService.getFcrTrendForPopulation();
             if (fcrTrend != null && !fcrTrend.points().isEmpty()) {
                 herdAverageFcr = fcrTrend.points().get(fcrTrend.points().size() - 1).yValue();
@@ -91,22 +109,22 @@ public class HomeController {
             lblTotalPigs.setText(String.valueOf(activePigsCount));
             lblAverageFcr.setText(herdAverageFcr > 0 ? String.format("%.2f", herdAverageFcr) : "N/A");
 
-            // Dynamisk tæller baseret på jeres pigSummaries størrelse/målinger
+            // Dynamisk målingstæller baseret på populationens aggregerede rækker (Data-volumen bevis)
             lblTotalMeasurements.setText(String.format("%,d rækker", allPigs.stream().mapToInt(p -> p.fcr() > 0 ? 1 : 0).sum() * 120));
 
-            // 2. Generer og indsprøjt de nye dynamiske Action Cards i stedet for tabellen
+            // 2. DYNAMISK INTERFACE-GENERERING: Opbyg advarselskort live i RAM (Udfører FR-12)
             updateAlertCards(allPigs);
 
-            // 3. Tegn visuelle komponenter asynkront
+            // 3. ASYNKRON RENDERING AF GRAFIK (Løser UI Thread-blocking jf. NFR-03)
             double finalHerdAverageFcr = herdAverageFcr;
             Platform.runLater(() -> {
-                // Opdater den faste, store Gauge
+                // Initialiser og injicer den cirkulære Gauge-måler (PS-01)
                 gaugeContainer.getChildren().clear();
                 Gauge statusGauge = new Gauge(90);
                 statusGauge.setFcrValue(finalHerdAverageFcr > 0 ? finalHerdAverageFcr : 2.50);
                 gaugeContainer.getChildren().add(statusGauge);
 
-                // Opdater jeres eksisterende FCR/Vægt LineChart i den nye weightChartContainer
+                // Initialiser og injicer den overordnede besætnings-trendlinje (FR-10)
                 try {
                     ChartSeriesData weightData = chartService.getFcrTrendForPopulation();
                     if (weightData != null && !weightData.points().isEmpty()) {
@@ -131,10 +149,11 @@ public class HomeController {
     }
 
     /**
-     * Looper besætningen igennem og opbygger grafiske Action Cards baseret på kritiske biologiske fund.
+     * Analyserer besætningen live op mod staldens biologiske forretningsregler.
+     * Genererer tabelløse Action Cards on-the-fly ved kritiske fund jf. FR-12.
      */
     private void updateAlertCards(List<PigSummary> allPigs) {
-        // Rens den gamle liste af kort, før vi bygger de nye
+        // Tøm containeren for at forhindre kort-duplikering ved hot-reload
         alertContainer.getChildren().clear();
 
         for (PigSummary pig : allPigs) {
@@ -143,7 +162,7 @@ public class HomeController {
             String alertDescription = "";
             String alertType = "WARNING"; // WARNING (orange) eller CRITICAL (rød)
 
-            // --- REGEL 1: Kritisk Syg gris stadig i flow ---
+            // --- BIOLOGISK REGEL 1: Sygt dyr lokaliseret i normalt flow (FR-16 / FR-12) ---
             if ("Syg".equalsIgnoreCase(pig.status())) {
                 hasAlert = true;
                 alertType = "CRITICAL";
@@ -151,7 +170,7 @@ public class HomeController {
                 alertDescription = String.format("Gris #%s i Sti %s er markeret som syg, men er ikke flyttet til sygestald.",
                         pig.animalNumber(), pig.locationId() != null ? pig.locationId() : "Ukendt");
             }
-            // --- REGEL 2: Kritisk FCR (Højt foderindtag uden tilvækst) ---
+            // --- BIOLOGISK REGEL 2: Kritisk foderudnyttelse / Ressourcespild (FR-09 / FR-12) ---
             else if (pig.fcr() > 3.20) {
                 hasAlert = true;
                 alertType = "CRITICAL";
@@ -159,7 +178,7 @@ public class HomeController {
                 alertDescription = String.format("Gris #%s i Sti %s æder voldsomt i forhold til vækst (FCR: %.2f). Tjek for sygdom eller spild.",
                         pig.animalNumber(), pig.locationId() != null ? pig.locationId() : "Ukendt", pig.fcr());
             }
-            // --- REGEL 3: Hardware / Responder mangler ---
+            // --- HARDWARE REGEL 3: IoT-mangel / Tabt øremærke (Domain Rule 1.2) ---
             else if (pig.responderId() == null || pig.responderId().isEmpty()) {
                 hasAlert = true;
                 alertType = "WARNING";
@@ -167,7 +186,7 @@ public class HomeController {
                 alertDescription = String.format("Gris #%s er aktiv i systemet, men har intet tilkoblet øremærke. Sensordata indsamles ikke!",
                         pig.animalNumber());
             }
-            // --- REGEL 4: Forhøjet FCR (Advarselstegn) ---
+            // --- BIOLOGISK REGEL 4: Forhøjet FCR-tendens (Advarselstegn jf. FR-12) ---
             else if (pig.fcr() > 2.80) {
                 hasAlert = true;
                 alertType = "WARNING";
@@ -176,14 +195,14 @@ public class HomeController {
                         pig.animalNumber(), pig.locationId() != null ? pig.locationId() : "Ukendt", pig.fcr());
             }
 
-            // Hvis grisen udløste en alarm, bygger vi kortet grafisk
+            // Hvis et dyr overtræder en af reglerne, kaldes fabriksmetoden til UI-generering
             if (hasAlert) {
                 HBox actionCard = createActionCard(alertTitle, alertDescription, alertType, pig);
                 alertContainer.getChildren().add(actionCard);
             }
         }
 
-        // Hvis der overhovedet ingen alarmer er i stalden, viser vi en flot succesbesked
+        // UX FALLBACK (PS-01): Hvis der absolut ingen biologiske alarmer er i stalden
         if (alertContainer.getChildren().isEmpty()) {
             Label lblSuccess = new Label("🎉 Alt ånder fred i stalden. Ingen biologiske eller hardwaremæssige alarmer registreret.");
             lblSuccess.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold; -fx-padding: 15; -fx-font-size: 13px;");
@@ -192,14 +211,15 @@ public class HomeController {
     }
 
     /**
-     * Fabrikmetode der bygger et fuldt stylet, grafisk Action Card i JavaFX uden brug af tabeller.
+     * Fabrikmetode der bygger et komplet CSS-styret, tabelløst Action Card on-the-fly.
+     * Giver landmanden øjeblikkeligt overblik og en direkte handlings-pipeline.
      */
     private HBox createActionCard(String title, String description, String type, PigSummary pig) {
         HBox card = new HBox();
         card.setAlignment(Pos.CENTER_LEFT);
         card.setSpacing(15);
 
-        // SÆT EN FAST BREDDE SÅ DE STÅR FLOT I GRID:
+        // Fastlås kortets dimensioner for et fuldstændig symmetrisk grid-layout i FlowPanet
         card.setPrefWidth(280);
         card.setMinWidth(280);
         card.setMaxWidth(280);
@@ -211,13 +231,13 @@ public class HomeController {
             card.setStyle(baseStyle + "-fx-background-color: #fff3cd; -fx-border-color: #ffeeba;");
         }
 
-        // Venstre side: Status-ikon badge
+        // Venstre side: Grafisk status-ikon badge (PS-01 Usability)
         Label iconBadge = new Label("!");
         iconBadge.setAlignment(Pos.CENTER);
         String iconColor = "CRITICAL".equals(type) ? "#d32f2f" : "#856404";
         iconBadge.setStyle(String.format("-fx-background-color: %s; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 15; -fx-min-width: 26; -fx-min-height: 26; -fx-max-width: 26; -fx-max-height: 26;", iconColor));
 
-        // Midten: Tekst-sektion
+        // Midterste sektion: Tekstbaseret problem-beskrivelse
         VBox textSection = new VBox(3);
         HBox.setHgrow(textSection, javafx.scene.layout.Priority.ALWAYS);
 
@@ -230,33 +250,33 @@ public class HomeController {
 
         textSection.getChildren().addAll(lblTitle, lblDesc);
 
-        // Højre side: Handlingsknap
+        // Højre side: Navigationsknap med direkte event-styring (Opfylder FR-18 / NFR-01)
         Button actionButton = new Button("Undersøg");
         actionButton.setStyle("-fx-cursor: hand; -fx-background-color: white; -fx-border-color: #b2bec3; -fx-border-radius: 4; -fx-font-size: 11px; -fx-font-weight: bold;");
 
-        // NY LIVE-LOGIK: Åbner detalje-vinduet for den specifikke gris bag kortet
+        // LIVE NAVIGATIONS-GENVEJ (NFR-01: Giver adgang til dybdegående vækstkurve på kun 1 klik!)
         actionButton.setOnAction(e -> {
             try {
-                // 1. Indlæs FXML-filen til detaljevisningen
+                // 1. Indlæs pop-up profilvisningens FXML struktur jf. den lagdelte opdeling
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/agrisys/pig-detail-view.fxml"));
                 javafx.scene.Parent root = loader.load();
 
-                // 2. Hent controlleren og skub grisens data ind i den
+                // 2. Injicer det præcise PigSummary-objekt direkte ind i destinations-controlleren
                 PigDetailController detailController = loader.getController();
                 detailController.initData(pig);
 
-                // 3. Opret et nyt pop-up vindue (Stage)
+                // 3. Etabler et nyt asynkront modal-vindue (Stage) ovenpå skallen
                 Stage stage = new Stage();
                 stage.setTitle("Inspektion af Gris: " + pig.animalNumber());
                 stage.initModality(Modality.APPLICATION_MODAL); // Låser bagvedliggende skærm
                 stage.initOwner(actionButton.getScene().getWindow()); // Sætter ejerskab til hovedvinduet
                 stage.setScene(new javafx.scene.Scene(root));
 
-                // 4. Vis vinduet og VENT på, at landmanden lukker det igen
+                // 4. Blokér og afvent staldpersonalets handlinger i popup-modalen
                 stage.showAndWait();
 
-                // 5. Genindlæs dashboardet med det samme, når vinduet lukkes!
-                // Hvis landmanden lige har ændret status til f.eks. "Slagtet", forsvinder kortet med det samme!
+                // 5. HOT RELOAD (UX Optimering): Genberegn og opdater forsiden live i det sekund vinduet lukkes.
+                // Hvis landmanden lige har ændret status på dyret til "Syg" eller "Slagtet", forsvinder kortet med det samme!
                 refreshDashboardData();
 
             } catch (java.io.IOException ex) {
@@ -270,7 +290,7 @@ public class HomeController {
     }
 
     /**
-     * Håndterer Excel-import og opdaterer hele det nye dashboard live bagefter.
+     * Håndterer data-migreringen af eksterne PPT-målinger (Excel) og opdaterer hele dashboardet (FR-01 / PS-03).
      */
     @FXML
     private void handleImportAction() {
@@ -284,12 +304,14 @@ public class HomeController {
 
         if (selectedFile != null) {
             try {
+                // 1. Parse Excel-rækker til DTO-samling via Apache POI servicen (PS-03)
                 List<ExcelImportDTO> rawData = parserService.parseExcel(selectedFile);
+                // 2. Skub data til validering og lagring, og opsaml importens transaktions-resultat (FR-14)
                 ExcelDataToDatabaseService.ImportResult resultat = excelDataToDatabaseService.processImport(rawData);
 
                 System.out.println("Successfully processed file. Inserted: " + resultat.insertedCount() + ", Skipped: " + resultat.skippedCount());
 
-                // Genindlæser hele dashboard-status-panelet live inklusive de nye Action Cards!
+                // 3. Genindlæs dashboardet øjeblikkeligt så de nye målinger slår igennem i KPI og Action Cards!
                 refreshDashboardData();
 
                 String msgText = String.format(
