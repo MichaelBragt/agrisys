@@ -1,7 +1,9 @@
 package com.agrisys.controller;
 
-import com.agrisys.Utils.*;
+import com.agrisys.Utils.AgrisysChartBuilder;
+import com.agrisys.Utils.Gauge;
 import com.agrisys.Utils.UIErrorReport;
+import com.agrisys.dto.chart.ChartPoint;
 import com.agrisys.dto.chart.ChartSeriesData;
 import com.agrisys.datalayer.entity.LocationRecord;
 import com.agrisys.model.view.PigDetailDTO;
@@ -11,6 +13,7 @@ import com.agrisys.service.PigDetailsService;
 import com.agrisys.model.UserSession;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.scene.chart.LineChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.util.StringConverter;
@@ -20,33 +23,35 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Controller til popup-modalen for en enkelts gris detaljer.
+ * Controller til popup-modalen for en enkelt gris' detaljer.
  * Håndterer individuel vækstovervågning, performance-grafer samt deaktivering af IoT-hardware.
- * * @author Eirik Pran og Michael Bragt og Nicolai Dahl
+ * * @author Eirik Pran og Michael Bragt og Nicolai Dahl (med optimeringer af gruppen)
  * @see "PS-01: Datavisualisering - Intuitive dashboards frem for rå tabeller"
  * @see "PS-02: Adgangsstyring - Arkitektonisk rollestyring og individuel CRUD"
  * @see "FR-03: Landmanden skal kunne rette stamdata, gruppe, lokation og foderindstillinger"
  * @see "FR-04: Landmanden skal kunne stoppe registreringen af en gris (v. sygdom/skade)"
  * @see "FR-05: Systemet skal vise vægt- og spiseaktivitet for en specifik gris"
  * @see "FR-09: Systemet skal automatisk beregne FCR og Gennemsnitlig Daglig Tilvækst (ADG)"
- * @see "FR-11: Systemet skal generere PDF-præsentation rapport for en individuel gris"
  * @see "FR-15: Rådgiver-interfacet skal være begrænset til Read-only på grisens stamdata"
  */
 public class PigDetailController {
+
     // JavaFX UI-elementer til præsentation af stamdata
     @FXML private Label lblAnimalNumber, lblResponderId, lblLocation, lblWeight, lblChartHeader;
     @FXML private Button btnVegt, btnFoder, btnFcr;
+
     // Input-komponenter til redigering (Underlagt FR-03 og FR-15)
     @FXML private DatePicker dpBirthDate;
     @FXML private ComboBox<String> cbStatus;
     @FXML private ComboBox<LocationRecord> cbLocation;
+
     // UI-containere til grafer og gauges (Understøtter FR-05 og FR-09)
     @FXML private StackPane gaugeContainer, chartContainer;
     @FXML private Button btnEdit, btnSave, btnRemoveResponder;
     @FXML private Label lblWeightGained;
     @FXML private Label lblTotalFeed;
 
-    // declaring services, DTO's and vars we need
+    // Services (Gjort final jf. Clean Code-principper for trådsikkerhed)
     private final PigDetailsService service = new PigDetailsService();
     private final LocationService locationService = new LocationService();
     private PigDetailDTO currentPig;
@@ -56,10 +61,6 @@ public class PigDetailController {
     private enum ChartType { VEGT, FODER, FCR }
     private ChartType activeChartType = ChartType.VEGT; // Standardgraf ved åbning
 
-
-    /**
-     * initialize kaldes automatisk, når detalje-modalen indlæses i RAM.
-     */
     @FXML
     public void initialize() {
         cbStatus.getItems().addAll("Aktiv", "Slagtet", "Syg");
@@ -103,33 +104,30 @@ public class PigDetailController {
             Optional<PigDetailDTO> details = service.getDetailedInfo(animalNumber);
             details.ifPresent(dto -> {
                 this.currentPig = dto;
-                // Opdater basale stamdata-tekster
+
                 lblAnimalNumber.setText(dto.animalNumber());
                 lblResponderId.setText(dto.responderId() != null ? dto.responderId() : "Ingen");
                 lblLocation.setText(dto.locationName() != null ? dto.locationName() : "N/A");
-                
-                // Select current location in ComboBox
+
+                // Vælg aktuel sti i ComboBoxen
                 cbLocation.getItems().stream()
-                    .filter(loc -> loc.locationName().equals(dto.locationName()))
-                    .findFirst()
-                    .ifPresent(loc -> cbLocation.setValue(loc));
+                        .filter(loc -> loc.locationName().equals(dto.locationName()))
+                        .findFirst()
+                        .ifPresent(loc -> cbLocation.setValue(loc));
 
                 dpBirthDate.setValue(dto.birthDate());
                 cbStatus.setValue(dto.status());
-                // Hvis grisen ikke har et øremærke på, deaktiveres "Fjern hardware"-knappen
+
+                // Hvis grisen ikke har et øremærke på, deaktiveres "Fjern hardware"-knappen (Domain Rule 1.2)
                 btnRemoveResponder.setDisable(dto.responderId() == null);
 
-                // Handle potential 0 or null weights
                 lblWeight.setText(dto.currentWeight() > 0 ? String.format("%.2f kg", dto.currentWeight()) : "Ingen data");
 
-                // --- HER LÆGGER DU DE TO NYE REGLER IND ---
-
-                // 1. Total Foderindtag (omregnes fra gram til kg)
-                // (Hvis jeres DTO metode hedder noget andet, fx getTotalFeed(), retter I bare navnet)
+                // 1. Total Foderindtag (omregnes fra gram til kg jf. PS-01)
                 double totalFeedKg = dto.totalFeed() / 1000.0;
                 lblTotalFeed.setText(String.format("%.2f kg foder", totalFeedKg));
 
-                // 2. Total Tilvækst (Aktuel vægt minus startvægt)
+                // 2. Total Tilvækst (Aktuel vægt minus startvægt jf. FR-09)
                 double startWeightKg = dto.startWeight() / 1000.0;
                 double growthKg = dto.currentWeight() - startWeightKg;
 
@@ -139,8 +137,6 @@ public class PigDetailController {
                     lblWeightGained.setText("0.00 kg (Mangler målinger)");
                 }
 
-                // ------------------------------------------
-
                 setupVisuals(dto);
             });
         } catch (SQLException e) {
@@ -148,44 +144,36 @@ public class PigDetailController {
         }
     }
 
-
     /**
-     * Forbereder og indsprøjter de grafiske elementer på grisen profil (FR-05 og FR-10).
+     * Forbereder og injicerer de grafiske elementer på grisens profil (FR-05 og FR-09).
      */
     private void setupVisuals(PigDetailDTO dto) {
-        // 1. Setup Gauge
+        // 1. Setup Gauge Måler (FR-09 FCR visning)
         gaugeContainer.getChildren().clear();
         Gauge fcrGauge = new Gauge(70);
-        fcrGauge.setFcrValue(dto.fcr()); // Real calculation from DB
+        fcrGauge.setFcrValue(dto.fcr());
         gaugeContainer.getChildren().add(fcrGauge);
 
-        // 2. Setup Chart using existing ChartBuilder
-        if (dto.assignmentId() != null) {
-            try {
-                ChartSeriesData series = service.getPigWeightHistory(dto.animalNumber(), dto.assignmentId());
-                chartContainer.getChildren().clear();
-                chartContainer.getChildren().add(AgrisysChartBuilder.buildLineChart(
-                    "", "Dato", "Vægt (kg)", "Vægt (kg)", List.of(series)
-                ));
-            } catch (SQLException e) {
-                System.err.println("Could not load chart data: " + e.getMessage());
-            }
-        }
+        // 2. OPTIMERING: Kalder den fælles graf-pipeline for at sikre ensartet styling ved vinduets åbning
+        opdaterIndividuelGraf(dto);
     }
-    // 2. Tegn standardgrafen (Vægtudvikling over tid jf. FR-05)
+
+    /**
+     * Central graf-pipeline. Tegner den valgte historiske tidslinje asynkront jf. FR-05.
+     */
     private void opdaterIndividuelGraf(PigDetailDTO dto) {
         if (dto == null || dto.assignmentId() == null) return;
 
         try {
             chartContainer.getChildren().clear();
 
-            // Opdater knappernes visuelle styling i forhold til hvad der er aktivt
+            // Opdater knappernes visuelle aktive CSS-styling live i præsentationslaget (PS-01)
             btnVegt.setStyle(activeChartType == ChartType.VEGT ? "-fx-background-color: #2196F3; -fx-text-fill: white;" : "");
             btnFoder.setStyle(activeChartType == ChartType.FODER ? "-fx-background-color: #4CAF50; -fx-text-fill: white;" : "");
             btnFcr.setStyle(activeChartType == ChartType.FCR ? "-fx-background-color: #FF9800; -fx-text-fill: white;" : "");
 
             ChartSeriesData series;
-            javafx.scene.chart.LineChart<String, Number> chart;
+            LineChart<String, Number> chart;
 
             // Switch-case der trækker den korrekte historik via vores Service (NFR-02)
             switch (activeChartType) {
@@ -209,11 +197,11 @@ public class PigDetailController {
             chartContainer.getChildren().add(chart);
 
         } catch (SQLException e) {
-            System.err.println("Could not load chart data: " + e.getMessage());
+            System.err.println("Kunne ikke indlæse historisk graf-data: " + e.getMessage());
+            UIErrorReport.showDatabaseError(e); // OPTIMERING: Sikrer grafisk fejlbesked frem for rå konsol-log
         }
     }
 
-    // Event-handlinger til skift af graftype (FR-05 / PS-01)
     @FXML
     private void handleVegtChartAction() {
         activeChartType = ChartType.VEGT;
@@ -232,14 +220,10 @@ public class PigDetailController {
         opdaterIndividuelGraf(currentPig);
     }
 
-    /**
-     * Skifter mellem visning og redigeringstilstand i interfacet (FR-03).
-     */
     @FXML
     private void handleToggleEdit() {
         isEditMode = !isEditMode;
 
-        // Toggle view elements
         lblLocation.setVisible(!isEditMode);
         lblLocation.setManaged(!isEditMode);
         cbLocation.setVisible(isEditMode);
@@ -251,10 +235,6 @@ public class PigDetailController {
         btnEdit.setText(isEditMode ? "Annuller" : "Rediger");
     }
 
-
-    /**
-     * Persisterer ændringer i stamdata direkte ned i MSSQL Serveren (Opfylder FR-03 og FR-04).
-     */
     @FXML
     private void handleSave() {
         String selectedStatus = cbStatus.getValue();
@@ -264,15 +244,15 @@ public class PigDetailController {
 
         // FORRETNINGSREGEL (FR-04): Hvis en gris stoppes (f.eks. pga. sygdom/slagtes), spørges der om hardwaren skal frigives
         if (!selectedStatus.equals("Aktiv") && currentPig.responderId() != null) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, 
-                "Ønsker du at fjerne responder " + currentPig.responderId() + " fra denne gris?", 
-                ButtonType.YES, ButtonType.NO);
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                    "Ønsker du at fjerne responder " + currentPig.responderId() + " fra denne gris?",
+                    ButtonType.YES, ButtonType.NO);
             alert.setTitle("Fjern Responder");
             Optional<ButtonType> result = alert.showAndWait();
             shouldRemove = (result.isPresent() && result.get() == ButtonType.YES);
         }
 
-        try { // Skub ændringer til databaselaget jf. lagdelt arkitektur (NFR-02)
+        try {
             Integer newLocId = selectedLocation != null ? selectedLocation.locationId() : null;
             service.updatePigDetails(currentPig.animalNumber(), selectedStatus, selectedBirthDate, shouldRemove, currentPig.responderId(), newLocId);
             handleToggleEdit();
@@ -282,13 +262,10 @@ public class PigDetailController {
         }
     }
 
-    /**
-     * Manuel deallokering af RFID hardware-øremærke fra grisen (Understøtter hardware-frigivelse jf. FR-04).
-     */
     @FXML
     private void handleRemoveResponder() {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, 
-            "Er du sikker på at du vil fjerne responderen nu?", ButtonType.YES, ButtonType.NO);
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                "Er du sikker på at du vil fjerne responderen nu?", ButtonType.YES, ButtonType.NO);
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.YES) {
                 try {

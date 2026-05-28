@@ -93,15 +93,17 @@ public class HomeController {
      */
     private void refreshDashboardData() {
         try {
-            // Hent den samlede besætning via logiklaget (null indikerer 'alle lokationer' jf. FR-06)
+            // Hent den samleden besætning via logiklaget (null indikerer 'alle lokationer' jf. FR-06)
             List<PigSummary> allPigs = pigService.getPigDashboardData(null);
 
             // 1. OPREMNING AF KPI-METRIKKER (Opfylder FR-09 og FR-10)
             int activePigsCount = allPigs.size();
             double herdAverageFcr = 0.0;
 
-            // Udtræk besætningens nyeste, vægtede gennemsnitlige FCR fra tidsserien
+            // OPTIMERING: Hent kun FCR-trend-datasættet ÉN gang fra databasen i stedet for to!
             ChartSeriesData fcrTrend = chartService.getFcrTrendForPopulation();
+
+            // DEFENSIFT TJEK: Forhindrer IndexOutOfBoundsException hvis tabellerne i databasen er tomme
             if (fcrTrend != null && !fcrTrend.points().isEmpty()) {
                 herdAverageFcr = fcrTrend.points().get(fcrTrend.points().size() - 1).yValue();
             }
@@ -117,6 +119,8 @@ public class HomeController {
 
             // 3. ASYNKRON RENDERING AF GRAFIK (Løser UI Thread-blocking jf. NFR-03)
             double finalHerdAverageFcr = herdAverageFcr;
+            ChartSeriesData finalFcrTrend = fcrTrend; // Gør variablen lokalt defineret og uforanderlig til UI-tråden
+
             Platform.runLater(() -> {
                 // Initialiser og injicer den cirkulære Gauge-måler (PS-01)
                 gaugeContainer.getChildren().clear();
@@ -125,21 +129,21 @@ public class HomeController {
                 gaugeContainer.getChildren().add(statusGauge);
 
                 // Initialiser og injicer den overordnede besætnings-trendlinje (FR-10)
-                try {
-                    ChartSeriesData weightData = chartService.getFcrTrendForPopulation();
-                    if (weightData != null && !weightData.points().isEmpty()) {
+                // OPTIMERING: Genbruger det allerede hentede 'finalFcrTrend' objekt i stedet for at lave en ny SQL-query
+                if (finalFcrTrend != null && !finalFcrTrend.points().isEmpty()) {
+                    try {
                         LineChart<String, Number> mainChart = AgrisysChartBuilder.buildLineChart(
                                 "Besætningens Foderudnyttelse (FCR Ratio) - Udvikling over tid",
                                 "Dato (ÅR-MD-DAG)",
                                 "FCR Værdi",
                                 "FCR",
-                                List.of(weightData)
+                                List.of(finalFcrTrend)
                         );
                         weightChartContainer.getChildren().clear();
                         weightChartContainer.getChildren().add(mainChart);
+                    } catch (Exception e) {
+                        System.err.println("Kunne ikke tegne dashboard-graf: " + e.getMessage());
                     }
-                } catch (Exception e) {
-                    System.err.println("Kunne ikke tegne dashboard-graf: " + e.getMessage());
                 }
             });
 
@@ -276,7 +280,7 @@ public class HomeController {
                 stage.showAndWait();
 
                 // 5. HOT RELOAD (UX Optimering): Genberegn og opdater forsiden live i det sekund vinduet lukkes.
-                // Hvis landmanden lige har ændret status på dyret til "Syg" eller "Slagtet", forsvinder kortet med det samme!
+                // Hvis landmanden lige har ændret status til f.eks. "Slagtet", forsvinder kortet med det samme!
                 refreshDashboardData();
 
             } catch (java.io.IOException ex) {
