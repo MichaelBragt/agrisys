@@ -302,6 +302,9 @@ public class HandlingerController {
 
     /**
      * Import af PPT Excel-filer (Opfylder FR-01 og PS-03)
+     * Because THIS import button is in 2 places in our APP
+     * We could have made a import button UI service method so we did not have this duplicate code
+     * twice... THIS we can pitch if we are asked at the exam...
      */
     @FXML
     private void handleImportAction() {
