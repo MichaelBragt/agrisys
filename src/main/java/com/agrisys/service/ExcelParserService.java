@@ -55,18 +55,25 @@ public class ExcelParserService {
     public List<ExcelImportDTO> parseExcel(File file) throws Exception {
         List<ExcelImportDTO> results = new ArrayList<>();
 
+        // Try with resource - autoclose when code block is done
         try (FileInputStream fis = new FileInputStream(file);
+             // Workbook is Apache POI library representation of a .xlsx file
              Workbook workbook = new XSSFWorkbook(fis)) {
 
+            // Sheet is POI representation of an Excel sheet, here index 0 so the first (and only)
+            // sheet we have
             Sheet sheet = workbook.getSheetAt(0);
             int lastRow = sheet.getLastRowNum();
+            // DateFormatter is a POI helper function to format cells
             DataFormatter formatter = new DataFormatter();
 
+            // Logging to terminal (for devs)
             LOGGER.info("Starting parse of sheet: " + sheet.getSheetName() + " with " + lastRow + " potential rows.");
 
             // Iterate through rows, skipping the header (row 0)
             for (int i = 1; i <= lastRow; i++) {
                 Row row = sheet.getRow(i);
+                //Check if row is empty, if then skip it
                 if (row == null || isRowEmpty(row)) continue;
 
                 // Structural Validation: Ensure row has enough columns for our 7-column layout (index 0-6)
@@ -91,6 +98,7 @@ public class ExcelParserService {
                     double feedIntake = getNumericValue(row.getCell(COL_FEED_INTAKE));
 
                     // Validation: Responder ID and Time are mandatory for the "Historical Brain" logic
+                    // If all is okay pack the cells into a ExcelDTO object and add them to the result list
                     if (!responderId.isBlank() && visitTime != null) {
                         results.add(new ExcelImportDTO(
                             animalNr, responderId, location, visitTime, duration, weight, feedIntake));

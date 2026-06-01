@@ -296,21 +296,34 @@ public class HomeController {
     /**
      * Håndterer data-migreringen af eksterne PPT-målinger (Excel) og opdaterer hele dashboardet (FR-01 / PS-03).
      */
+    /**
+     * PRACTICE
+     * Method to handle the on button click
+     * Here we start our ETL (Extract, Transform, Load) flow for importing excel data
+     * ETL 1
+     *
+     */
     @FXML
     private void handleImportAction() {
+        // USing Filechooser and setting extension filter to excel files
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Vælg Excel fil");
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Excel Files", "*.xlsx")
         );
 
+        // Open the choose dialog and set selectedFile to the one we choose
         File selectedFile = fileChooser.showOpenDialog(importButton.getScene().getWindow());
 
+        // is there a file?
         if (selectedFile != null) {
             try {
                 // 1. Parse Excel-rækker til DTO-samling via Apache POI servicen (PS-03)
+                // We create a list of ExcelImportDTO using our parsingService
                 List<ExcelImportDTO> rawData = parserService.parseExcel(selectedFile);
                 // 2. Skub data til validering og lagring, og opsaml importens transaktions-resultat (FR-14)
+                // We use our ExcelDataToDatabseService which takes the list of Excel DTO's and process
+                // them and inserting them into all the tables in the databse
                 ExcelDataToDatabaseService.ImportResult resultat = excelDataToDatabaseService.processImport(rawData);
 
                 System.out.println("Successfully processed file. Inserted: " + resultat.insertedCount() + ", Skipped: " + resultat.skippedCount());
