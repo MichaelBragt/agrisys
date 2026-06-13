@@ -1,5 +1,6 @@
 package com.agrisys.controller;
 
+import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.datalayer.entity.LocationRecord;
 import com.agrisys.service.LocationService;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -17,12 +18,11 @@ import java.util.List;
 /**
  * Controller til administration og CRUD-håndtering af staldens bokse og stier.
  * Gør det muligt for landmanden at vedligeholde de fysiske rammer i svineproduktionen live.
- * * @author Nicolai Dahl
+ * * @author Nicolai Dahl (med optimeringer af gruppen)
  * @see "PS-03: Interoperabilitet - Strukturering og persistent besætningsstyring"
  * @see "FR-19: CRUD Båse - Landmanden skal kunne oprette og administrere båse/bokse"
  * @see "NFR-02: Architecture - Systemet skal opbygges i en lagdelt arkitektur (UI, Logik, Data)"
  */
-
 public class LocationsController {
 
     @FXML private TableView<LocationRecord> locationTable;
@@ -51,10 +51,22 @@ public class LocationsController {
         loadLocations();
     }
 
+    /**
+     * Henter alle lokationer live via forretningslaget og hydrerer tabellen defensivt.
+     */
     private void loadLocations() {
         locationList.clear();
-        List<LocationRecord> locations = locationService.getAllLocations();
-        locationList.addAll(locations);
+        try {
+            List<LocationRecord> locations = locationService.getAllLocations();
+            locationList.addAll(locations);
+        } catch (Exception e) {
+            System.err.println("Kritisk fejl under indlæsning af stistamdata: " + e.getMessage());
+            showError("Kunne ikke synkronisere stier med databasen.");
+            // Hvis det er en decideret databasefejl, sendes den til jeres fælles fejlkomponent
+            if (e instanceof SQLException) {
+                UIErrorReport.showDatabaseError((SQLException) e);
+            }
+        }
     }
 
     @FXML
@@ -66,9 +78,10 @@ public class LocationsController {
             handleClear();
             loadLocations();
         } catch (IllegalArgumentException e) {
-            showError(e.getMessage());
+            showError(e.getMessage()); // Milde valideringsfejl vises lokalt i UI-labelet
         } catch (SQLException e) {
-            showError("Fejl ved oprettelse af lokation: " + e.getMessage());
+            showError("Fejl ved oprettelse af lokation.");
+            UIErrorReport.showDatabaseError(e); // OPTIMERING: Tunge SQL-nedbrud afleveres til fælles-komponenten
         }
     }
 
@@ -93,7 +106,8 @@ public class LocationsController {
         } catch (IllegalArgumentException e) {
             showError(e.getMessage());
         } catch (SQLException e) {
-            showError("Fejl ved opdatering: " + e.getMessage());
+            showError("Fejl ved opdatering.");
+            UIErrorReport.showDatabaseError(e);
         }
     }
 
@@ -113,10 +127,12 @@ public class LocationsController {
                 loadLocations();
             }
         } catch (IllegalStateException e) {
+            // Håndterer jeres databasespærre, hvis der stadig går aktive grise i stien!
             showWarningDialog("Advarsel: Kan ikke slette lokation", e.getMessage());
             showError(e.getMessage());
         } catch (SQLException e) {
-            showError("Fejl ved sletning: " + e.getMessage());
+            showError("Fejl ved sletning.");
+            UIErrorReport.showDatabaseError(e);
         }
     }
 

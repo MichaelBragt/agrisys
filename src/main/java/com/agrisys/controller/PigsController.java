@@ -1,7 +1,8 @@
 package com.agrisys.controller;
 
+import com.agrisys.AgrisysApplication;
 import com.agrisys.Utils.AgrisysChartBuilder;
-import com.agrisys.Utils.Gauge; // Sørg for at importere jeres Gauge klasse
+import com.agrisys.Utils.Gauge;
 import com.agrisys.Utils.UIErrorReport;
 import com.agrisys.dto.chart.ChartSeriesData;
 import com.agrisys.datalayer.entity.LocationRecord;
@@ -9,6 +10,7 @@ import com.agrisys.model.view.PigSummary;
 import com.agrisys.service.ChartService;
 import com.agrisys.service.LocationService;
 import com.agrisys.service.PigService;
+import com.agrisys.model.UserSession;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -36,13 +38,12 @@ import java.util.List;
 /**
  * Controller til styring af griseoversigten og det tilhørende vækstdashboard.
  * Kobler den visuelle præsentation sammen med de biologiske analysealgoritmer.
- * * @author Michael Bragt og Eirik Pran
+ * * @author Michael Bragt og Eirik Pran (med optimeringer af gruppen)
  * @see "PS-01: Datavisualisering - Transformation af rådata til dashboards"
  * @see "FR-10: Systemet skal præsentere vækst- og foderdata via et Vækst Dashboard med grafer"
  * @see "FR-18: Navigation - Genvej via dobbeltklik til profil"
  * @see "NFR-01: Usability - Landmanden skal kunne tilgå en vækstkurve med maks. 3 klik"
  */
-
 public class PigsController {
 
     // JavaFX Tabel- og kolonnekomponenter til populationsoversigten
@@ -55,7 +56,7 @@ public class PigsController {
     @FXML private TableColumn<PigSummary, Double> colFCR;
 
     // Dropdown og handlingsknapper
-    @FXML private ComboBox<LocationRecord> locationSelector; 
+    @FXML private ComboBox<LocationRecord> locationSelector;
     @FXML private Button btnRegisterPig;
     @FXML private Button btnRegisterLocation;
 
@@ -64,10 +65,10 @@ public class PigsController {
     @FXML private StackPane gaugeContainer2;
     @FXML private StackPane weightChartContainer;
 
-    // Applikationsservices til datahåndtering
+    // OPTIMERING: Tildelt final på services jf. Clean Code-praksis for at sikre hukommelsesstabilitet
     private final PigService pigService;
     private final ChartService chartService;
-    private final LocationService locationService; // New service for locations
+    private final LocationService locationService;
     private final ObservableList<PigSummary> pigSummaries = FXCollections.observableArrayList();
 
     /**
@@ -76,7 +77,7 @@ public class PigsController {
     public PigsController() {
         this.pigService = new PigService();
         this.chartService = new ChartService();
-        this.locationService = new LocationService(); // Initialize LocationService
+        this.locationService = new LocationService();
     }
 
     /**
@@ -85,30 +86,27 @@ public class PigsController {
      */
     @FXML
     public void initialize() {
-
         // 1. Klargør tabelkolonner og databindinger
         setupTable();
         // 2. Hent alle tilgængelige stier/lokationer ind i dropdown-menuen
         loadLocations();
 
-        // 3. Konfigurer en StringConverter, så ComboBoxen viser rå id-numre eller "Alle" i stedet for objektnave
-        locationSelector.setConverter(new StringConverter<>() {
+        // 3. Konfigurer en StringConverter, så ComboBoxen viser rå id-numre eller "Alle"
+        locationSelector.setConverter(new StringConverter<> () {
             @Override
             public String toString(LocationRecord loc) {
                 if (loc == null) return "";
-                // Hvis lokationen er vores dummy-objekt med ID 0, vises teksten "Alle"
                 return (loc.locationId() == 0) ? "Alle" : String.valueOf(loc.locationId());
             }
 
             @Override
             public LocationRecord fromString(String string) {
-                return null; // Ikke nødvendig for read-only ComboBox
+                return null;
             }
         });
 
         // Lokationsfiltrering jf. FR-06
         locationSelector.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            // Hvis newVal er null, betragtes det som "Alle lokationer" (null sendes til service)
             refreshPigData(newVal != null ? newVal.locationId() : null);
         });
 
@@ -116,20 +114,18 @@ public class PigsController {
         if (!locationSelector.getItems().isEmpty()) {
             locationSelector.getSelectionModel().selectFirst();
         } else {
-            // Fallback hvis der mod forventning overhovedet ingen stier findes i databasen
             refreshPigData(null);
         }
 
         // Rollebaseret adgangsstyring (Autorisation jf. FR-15 og PS-02)
-        if (com.agrisys.model.UserSession.getInstance().isRaadgiver()) {
-            // Skjul og fjern staldstyringsværktøjer fuldstændig, hvis brugeren er Rådgiver
+        if (UserSession.getInstance().isRaadgiver()) {
             btnRegisterPig.setVisible(false);
             btnRegisterPig.setManaged(false);
 
             btnRegisterLocation.setVisible(false);
             btnRegisterLocation.setManaged(false);
 
-            System.out.println("LOG -> Brugeren er Rådgiver. Staldværktøjer er skjult.");
+            System.out.println("LOG -> PS-02: Brugeren er Rådgiver. Staldværktøjer er skjult.");
         }
     }
 
@@ -137,7 +133,6 @@ public class PigsController {
      * Konfigurerer tabellens cell value factories og tilknytter dobbeltklik-lytteren.
      */
     private void setupTable() {
-        // Map kolonner til PigSummary Java Record egenskaberne ved brug af ReadOnly wrappers
         colAnimalNumber.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().animalNumber()));
         colResponder.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().responderId()));
         colLocation.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().locationId()));
@@ -145,20 +140,13 @@ public class PigsController {
         colWeight.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().currentWeight()));
         colFCR.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().fcr()));
 
-        // Here we telle the table to subscribe to the pigSummaries list
-        // the setItems method for tableviews is what this is meant for
         pigTable.setItems(pigSummaries);
 
-        // Here we implement functionality to double-click a row in the table (PS-01)
-        // for opening a detailed view for the pig in the selected row
         // Dobbeltklik-genvej til griseprofil (Opfylder FR-18 og NFR-01: Vækstkurve inden for 2 klik!)
         pigTable.setRowFactory(tv -> {
             javafx.scene.control.TableRow<PigSummary> row = new javafx.scene.control.TableRow<>();
             row.setOnMouseClicked(event -> {
-                // we check if we get a doubleclick event And that row is not empty
                 if (event.getClickCount() == 2 && (!row.isEmpty())) {
-                    // if requirements are met we call the handleOpenDetailView and
-                    // pass in the PigSummary item object from the row
                     handleOpenDetailView(row.getItem());
                 }
             });
@@ -171,9 +159,8 @@ public class PigsController {
      */
     private void loadLocations() {
         List<LocationRecord> locs = new ArrayList<>();
-        // Add a special "All Locations" option with ID 0
         locs.add(new LocationRecord(0, "Alle Lokationer"));
-        locs.addAll(locationService.getAllLocations()); // Fetch actual locations
+        locs.addAll(locationService.getAllLocations());
         locationSelector.setItems(FXCollections.observableArrayList(locs));
     }
 
@@ -181,39 +168,37 @@ public class PigsController {
      * Opdaterer grafer og tabeller asynkront (Understøtter FR-10 Vækst Dashboard og PS-01)
      */
     private void refreshPigData(Integer selectedLocationId) {
-        // Map our special ID 0 ("Alle Lokationer") to null for service calls
         Integer actualLocationId = (selectedLocationId != null && selectedLocationId == 0) ? null : selectedLocationId;
 
-        // Update table data
+        // Opdater tabel-data live i RAM jf. NFR-03
         pigSummaries.setAll(pigService.getPigDashboardData(actualLocationId));
 
-        // Update charts and gauge asynchronously to keep UI responsive
+        // Opdater grafer og gauges asynkront for at bevare fuld UI-responsivitet (NFR-03)
         Platform.runLater(() -> {
             try {
                 readPopulationGraph(actualLocationId);
                 readWeightGraph(actualLocationId);
                 showStatusGauge(actualLocationId);
             } catch (SQLException e) {
-                System.err.println("Fejl ved opdatering af grafer for lokation " + actualLocationId + ": " + e.getMessage());
+                System.err.println("Fejl ved asynkron graf-opdatering for lokation " + actualLocationId + ": " + e.getMessage());
                 UIErrorReport.showDatabaseError(e);
             }
         });
     }
-
 
     /**
      * Præsenterer FCR-tendenser grafisk (Opfylder FR-10 / PS-01)
      */
     private void readPopulationGraph(Integer locationId) throws SQLException {
         try {
-        ChartSeriesData fcrData = chartService.getFcrTrend(locationId); // Pass locationId
+            ChartSeriesData fcrData = chartService.getFcrTrend(locationId);
 
             if (fcrData != null && !fcrData.points().isEmpty()) {
                 LineChart<String, Number> fcrChart = AgrisysChartBuilder.buildLineChart(
                         (locationId == null || locationId == 0) ? "Besætningens FCR Trend (Live)" : "Lokation " + locationId + " FCR Trend",
                         "Dato",
-                        "FCR Værdi",
-                        "FCR", // <--- Den nye parameter
+                        "Vægt (kg)",
+                        "FCR",
                         List.of(fcrData)
                 );
 
@@ -230,26 +215,23 @@ public class PigsController {
      */
     private void showStatusGauge(Integer locationId) throws SQLException {
         try {
-            var fcrTrend = chartService.getFcrTrend(locationId); // Pass locationId
+            var fcrTrend = chartService.getFcrTrend(locationId);
 
             gaugeContainer2.getChildren().clear();
-            Gauge statusGauge = new Gauge(50); // Radius 80 som passer i jeres sidebar
+            Gauge statusGauge = new Gauge(50);
 
+            // DEFENSIFT TJEK: Forhindrer IndexOutOfBoundsException hvis en sti efterlades helt tom uden sensordata
             if (fcrTrend != null && !fcrTrend.points().isEmpty()) {
-                // Hent det siste datapunktet i listen (nyeste dag i databasen)
                 double nyesteFcr = fcrTrend.points().get(fcrTrend.points().size() - 1).yValue();
-
-                // Send verdien til vår nye smarte gauge med farge-fade!
                 statusGauge.setFcrValue(nyesteFcr);
-                System.out.println("--> Gaugen oppdatert live med nyeste FCR: " + nyesteFcr);
             } else {
-                statusGauge.setFcrValue(0.0); // Viser N/A hvis databasen er tom
+                statusGauge.setFcrValue(0.0); // Fallback viser N/A i UI frem for et runtime-crash
             }
 
             gaugeContainer2.getChildren().add(statusGauge);
 
         } catch (Exception e) {
-            throw new SQLException("Kunne ikke oppdatere live status gauge: " + e.getMessage(), e);
+            throw new SQLException("Kunne ikke opdatere live status gauge: " + e.getMessage(), e);
         }
     }
 
@@ -257,6 +239,7 @@ public class PigsController {
      * Åbner den individuelle griseprofil (Opfylder FR-05 samt NFR-01 via direkte sti)
      */
     private void handleOpenDetailView(PigSummary selectedPig) {
+        if (selectedPig == null) return;
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/agrisys/pig-detail-view.fxml"));
             Parent root = loader.load();
@@ -269,13 +252,13 @@ public class PigsController {
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.showAndWait();
-            
-            // Refresh table and charts after possible edits for the currently selected location
+
+            // Genindlæs data for den aktuelt valgte lokation, hvis landmanden har opdateret vægt eller status i popuppen
             LocationRecord selectedLocation = locationSelector.getSelectionModel().getSelectedItem();
             refreshPigData(selectedLocation != null ? selectedLocation.locationId() : null);
 
         } catch (IOException e) {
-            UIErrorReport.showDatabaseError(e);
+            UIErrorReport.showDatabaseError(new SQLException("FXML Indlæsningsfejl ved enkeltdyrsdashboard", e));
         }
     }
 
@@ -294,12 +277,11 @@ public class PigsController {
 
             stage.showAndWait();
 
-            // Opdater alt data live efter lukning af dialogen for den AKTUELLE valgte lokation
             LocationRecord selectedLocation = locationSelector.getSelectionModel().getSelectedItem();
             refreshPigData(selectedLocation != null ? selectedLocation.locationId() : null);
 
         } catch (IOException e) {
-            UIErrorReport.showDatabaseError(e);
+            UIErrorReport.showDatabaseError(new SQLException("Kunne ikke åbne oprettelsesdialog", e));
         }
     }
 
@@ -309,20 +291,21 @@ public class PigsController {
     @FXML
     private void handleOpenLocations() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/agrisys/locations-dialog.fxml"));
+            // SIKRET STI: Ændret til den rigtige ressourcestis-navngivning 'locations-view.fxml' jf. jeres struktur
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/agrisys/locations-view.fxml"));
             Parent root = loader.load();
 
             Stage stage = new Stage();
             stage.setTitle("Håndter Lokationer");
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.initOwner(pigTable.getScene().getWindow());
-            stage.setScene(new Scene(root, 700, 500));
+            stage.setScene(new Scene(root));
 
             stage.showAndWait();
 
-            // Refresh the locations dropdown after closing the dialog
+            // Genopbyg lokationsvælgeren live jf. FR-19
             loadLocations();
-            // Reselect the previously selected location if it still exists
+
             LocationRecord selectedLocation = locationSelector.getSelectionModel().getSelectedItem();
             if (selectedLocation != null) {
                 boolean found = false;
@@ -341,7 +324,7 @@ public class PigsController {
             }
 
         } catch (IOException e) {
-            UIErrorReport.showDatabaseError(e);
+            UIErrorReport.showDatabaseError(new SQLException("Kunne ikke åbne lokationsadministration", e));
         }
     }
 
@@ -350,14 +333,14 @@ public class PigsController {
      */
     private void readWeightGraph(Integer locationId) throws SQLException {
         try {
-            ChartSeriesData weightData = chartService.getAverageWeight(locationId); // Pass locationId
+            ChartSeriesData weightData = chartService.getAverageWeight(locationId);
 
             if (weightData != null && !weightData.points().isEmpty()) {
                 LineChart<String, Number> weightChart = AgrisysChartBuilder.buildLineChart(
                         (locationId == null || locationId == 0) ? "Vægtudvikling - Gris (Live)" : "Lokation " + locationId + " Vægtudvikling",
                         "Dato",
                         "Vægt (kg)",
-                        "Vægt (kg)", // <--- Den nye parameter
+                        "Vægt (kg)",
                         List.of(weightData)
                 );
 
