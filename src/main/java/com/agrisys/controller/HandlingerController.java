@@ -314,15 +314,22 @@ public class HandlingerController {
 
         File selectedFile = fileChooser.showOpenDialog(btnImportData.getScene().getWindow());
 
+        // if our file is NOT null
         if (selectedFile != null) {
             try {
+                // We use our ParserService to extract all data into ExcelImportDTO's
                 List<ExcelImportDTO> rawData = parserService.parseExcel(selectedFile);
+                // When we have our list of Excel DTO objects we use our ExcelDataToDatabaseService
+                // to process the list and insert the objects into the database
                 ExcelDataToDatabaseService.ImportResult resultat = excelDataToDatabaseService.processImport(rawData);
 
+                // terminal text
                 System.out.println("Successfully processed file. Inserted: " + resultat.insertedCount() + ", Skipped: " + resultat.skippedCount());
 
+                // load the pigs and refresh UI
                 loadPigData();
 
+                // text for UI messagebox
                 String msgText = String.format(
                         "%d nye målinger blev synkroniseret.\n%d målinger blev udeladt (Dublet-kontrol jf. FR-14).",
                         resultat.insertedCount(),

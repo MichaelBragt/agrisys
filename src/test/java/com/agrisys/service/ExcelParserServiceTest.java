@@ -1,3 +1,6 @@
+// This ia same package as the service we test
+// so this is a namespace and because they share same package
+// ExcelParserService can expose it's method to this test with package scope
 package com.agrisys.service;
 
 import org.apache.poi.ss.usermodel.*;
@@ -18,6 +21,9 @@ class ExcelParserServiceTest {
     private DataFormatter formatter;
     private Workbook workbook;
 
+    // This is a lifecycle annotation
+    // this runs before every single individual @Test
+    // Ensures test isolation, every test gets fresh test baseline
     @BeforeEach
     void setUp() {
         // Prove we are running on Java 21

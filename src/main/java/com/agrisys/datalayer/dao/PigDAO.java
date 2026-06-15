@@ -9,6 +9,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+// PREPARED STATEMENTS
+// "I vores datalag har vi konsekvent valgt at anvende PreparedStatement frem for almindelige direkte Statement-objekter." +
+// "Dette valg er truffet ud fra to primære software engineering-principper: Sikkerhed og Performance.
+// For det første sikrer det os mod SQL Injection, som er en af de mest kritiske sårbarheder i database-applikationer.
+// Ved at anvende placeholders med spørgsmålstegn tvinger vi databasen til at adskille SQL-kommandoens struktur fra selve datainputtet.
+// Databasen laver en pre-kompilering af forespørgslen og låser en eksekveringsplan fast, inden parametrene bindes.
+// Hvis en bruger forsøger at injicere SQL-kommandoer i vores JavaFX-tekstfelter, vil JDBC-driveren og MSSQL-serveren behandle inputtet udelukkende som en rå,
+// neutraliseret dataliteral og aldrig som eksekverbar kode.
+// Samtidig opnår vi en performance-fordel ved, at databasen cacher eksekveringsplanen, hvilket minimerer overhead ved gentagne databasekald,
+// når der f.eks. oprettes grise eller batches af sensordata."
+
 /**
  * Data Access Object (DAO) for Pig-tabellen.
  * Håndterer de basale CRUD-operationer samt komplekse databaserelaterede aggregeringer (OUTER APPLY)
@@ -112,6 +123,21 @@ public class PigDAO {
     public List<PigSummary> getPigSummaries() throws SQLException {
         List<PigSummary> summaries = new ArrayList<>();
         String sql = """
+/*
+SELECT bestemmer hvilket resultatsæt vi vil have tilbage fra vores query
+SQL opretter ligesom en table i baggrunden med hvilke kolonner der skal oprettes
+ud fra vores SELECT
+Også derfor passer de ind i vores fastlagte PigSummary objekter.
+Nogle data fra vores SELECT bruges dog til midlertidige variabler
+Vi bruger til beregning
+
+OUTER_APPLY er en avanceret T-SQL operator, den fungerer som en RELATIONEL løkke
+der evaluerer en subquery i databasen for hver gris
+T-SQL = Transact-SQL (Er en Microsoft udvidelse til ANSI/ISO SQL)
+
+Fordi vi bruger Microsofts T-SQL, ville vi HVIS vi skulle flytte til en anden database i fremtiden
+Skulle omskrive vores queries
+*/
         SELECT 
             p.animal_number, 
             ra.responder_id, 
@@ -119,23 +145,32 @@ public class PigDAO {
             p.birth_date,
             latest_meas.pig_weight AS latest_weight,
             earliest_meas.pig_weight AS start_weight,
+-- skalar korreleret subquery (en skalar subquery returnerer altid kun én enkelt værdi).
+-- En SELECT inde i en SELECT
             (SELECT SUM(pd2.feed_intake) FROM PPT_Data pd2 WHERE pd2.assignment_id = ra.assignment_id) AS total_feed,
             p.status
         FROM Pig p
         LEFT JOIN Responder_Assignment ra ON p.animal_number = ra.animal_number AND ra.date_removed IS NULL
         LEFT JOIN Pig_Location pl ON p.animal_number = pl.animal_number AND pl.departed_at IS NULL
+-- Her finder vi TOP 1 vægt, sorteret efter tid faldende, så vi får den seneste vægt
         OUTER APPLY (
             SELECT TOP 1 pd.pig_weight 
             FROM PPT_Data pd 
             WHERE pd.assignment_id = ra.assignment_id 
             ORDER BY pd.visit_time DESC
         ) AS latest_meas
+-- Her finder vi TOP 1 vægt, sorteret stigende og frasorteret alt under er lig med 0
+-- det giver og den første vægt (startvægt)
+-- Vi kunne have valgt en SELECT i en SELECT, men OUTER_APPLY er valgt for princippet: Design For Change
+-- Hvis systemet en dag skulle kunne vise HVORNÅR denne måler er fra, så skulle denne subquery hente 2 data
+-- Hvilke en SKALAR Subquery ikke kan
         OUTER APPLY (
             SELECT TOP 1 pd3.pig_weight 
             FROM PPT_Data pd3 
             WHERE pd3.assignment_id = ra.assignment_id AND pd3.pig_weight > 0
             ORDER BY pd3.visit_time ASC
         ) AS earliest_meas
+-- Vi vil kunne have levende grise (- slagtede)
         WHERE p.status IN ('Aktiv', 'Syg')
         """;
 
@@ -187,6 +222,17 @@ public class PigDAO {
     /**
      * Henter lokationsspecifikke summaries (Pigs-tabellens dropdown-filtrering jf. FR-06).
      * Inkluderer fuld on-the-fly FCR-beregning for den specifikke sti/boks (FR-19 / FR-20).
+     */
+
+    /**
+     * Denne metode BURDE have været implementeret sammen med getPigSummaries()
+     * Vi står nu med kode der skal rettes 2 steder hvis vi f.eks vil lndre FCR beregning osv.
+     * Den kunne forholdvis nemt være implementeret i den anden metode
+     * StringBuilder sql = new StringBuilder(""" """);
+     * if (locationId != null) {
+     *         sql.append(" AND pl.location_id = ?");
+     *     }
+     *
      */
     public List<PigSummary> getPigSummariesByLocation(int locationId) throws SQLException {
         List<PigSummary> summaries = new ArrayList<>();

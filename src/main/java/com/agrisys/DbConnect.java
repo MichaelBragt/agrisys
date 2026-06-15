@@ -84,6 +84,8 @@ public enum DbConnect {
      * 
      * @return The active database Connection.
      */
+    // synchronized makes it thread safe, only one thread can access this method at a time
+    // If thread A is using/inside this method and thread B calls it, it has to wait for thread A to finish
     public synchronized Connection getConnection() {
         try {
             // Check if connection is null, closed, or fails the validation ping

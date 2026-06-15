@@ -122,6 +122,8 @@ public class ExcelParserService {
      * we have NO scope keyword here for test purposes
      * No keyword is package private scope, that way our tests can use it
      */
+
+    // DateFormatter is a POI helper function to format cells
     String getCleanString(Cell cell, DataFormatter formatter) {
         if (cell == null) return "";
         String val = formatter.formatCellValue(cell).trim();
@@ -136,6 +138,7 @@ public class ExcelParserService {
         if (cell == null) return null;
 
         // Strategy 1: Native Excel Date object
+        // DateUtil is a Apache POI helper function to parse dates
         try {
             if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
                 return cell.getLocalDateTimeCellValue();
@@ -149,6 +152,7 @@ public class ExcelParserService {
         if (cellValue == null || cellValue.isBlank()) return null;
 
         // Try ISO-8601 (2026-05-14T18:08:49)
+        // For ISO-8601 we need to replace T with empty space
         try {
             return LocalDateTime.parse(cellValue.replace(" ", "T"));
         } catch (DateTimeParseException e) {

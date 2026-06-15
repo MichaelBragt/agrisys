@@ -66,10 +66,16 @@ public class LoginController {
 
         try {
             // 2. AUTENTIFICERING: Kalder den sikre database-validering (SHA-256 tjek live i DB jf. FR-08)
+            // Her begynder flowfejlen... Inde i validateLogin metoden kalder vi findByUsername
+            // så her længere nede, er det lidt redundant at vi kalder den igen
+            // så vi kalder findByUsername 2 gange i hele login flowet, hvilket koster resourcer
+            // validateLogin skulle have modtaget en fuld AppUserRecord istedet
+            // Så havde det ikke være nødvendigt med det andet kald
             Optional<AppUserDAO.UserResult> loginResult = appUserDAO.validateLogin(username, password);
 
             if (loginResult.isPresent()) {
                 // 3. AUTORISATION: Hvis koden matcher, hentes den fulde bruger-record til sessionsstyring
+                // DETTE KALD, kunne være undgået
                 Optional<AppUserRecord> userOpt = appUserDAO.findByUsername(username);
                 if (userOpt.isPresent()) {
                     performLogin(userOpt.get());

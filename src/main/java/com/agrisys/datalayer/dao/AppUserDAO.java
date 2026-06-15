@@ -1,5 +1,16 @@
 package com.agrisys.datalayer.dao;
 
+// PREPARED STATEMENTS
+// "I vores datalag har vi konsekvent valgt at anvende PreparedStatement frem for almindelige direkte Statement-objekter." +
+// "Dette valg er truffet ud fra to primære software engineering-principper: Sikkerhed og Performance.
+// For det første sikrer det os mod SQL Injection, som er en af de mest kritiske sårbarheder i database-applikationer.
+// Ved at anvende placeholders med spørgsmålstegn tvinger vi databasen til at adskille SQL-kommandoens struktur fra selve datainputtet.
+// Databasen laver en pre-kompilering af forespørgslen og låser en eksekveringsplan fast, inden parametrene bindes.
+// Hvis en bruger forsøger at injicere SQL-kommandoer i vores JavaFX-tekstfelter, vil JDBC-driveren og MSSQL-serveren behandle inputtet udelukkende som en rå,
+// neutraliseret dataliteral og aldrig som eksekverbar kode.
+// Samtidig opnår vi en performance-fordel ved, at databasen cacher eksekveringsplanen, hvilket minimerer overhead ved gentagne databasekald,
+// når der f.eks. oprettes grise eller batches af sensordata."
+
 /**
  * Data Access Object (DAO) for AppUser-tabellen.
  * Varetager database-integrationen for brugerautentificering og rettighedsstyring.
@@ -46,6 +57,9 @@ public class AppUserDAO {
             // 3. Sammenlign de to hashes (Input-hash mod databasens gemte hash)
             if (user.password().equals(hashedInput)) {
                 // Succes! Returner de data, som jeres UserSession skal bruge
+                // HER SKULLE VI HAVE RETURNERET EN AppUserRecord istedet
+                // Vi har den allerede i denne line AppUserRecord user = userOpt.get();
+                // Så vi skulle bare have gjort return Optional.of(user);
                 return Optional.of(new UserResult(user.username(), user.userRole()));
             }
         }
@@ -57,6 +71,9 @@ public class AppUserDAO {
     /**
      * Retrieves an AppUser by their unique username.
      */
+    // Here the Connection coon should have been outside the try with resource
+    // so the connection didn't get closed, but our single enum Connection class
+    // is luckily self-healing so it won't crash
     public Optional<AppUserRecord> findByUsername(String username) throws SQLException {
         String sql = "SELECT user_id, username, password, user_role FROM AppUser WHERE username = ?";
         try (Connection conn = DbConnect.UNIQUE_CONNECT.getConnection();
